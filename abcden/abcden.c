@@ -1,5 +1,4 @@
 /////////AB2C4 dendritic triblock copolymer //////
-///////Apr 2018 //////
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
