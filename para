@@ -1,8 +1,8 @@
-82
-1, 110
+0
+1, 100
 0.050, 0.100
 0.001
-3, 1
+1, 1
 0
 40.0, 40.0, 40.0
 0.14, 0.26, 0.60
@@ -12,31 +12,3 @@ fet.dat
 pha.dat
 0.005
 1, 1, 1
-
-Instructions:
-1.Initiation method: 0-random, 1-read w in file, 2-read ph in file
-    Phase    | Number
-    csA15    | 15
-    csBCC    | 233
-    csFCC    | 633
-    csPS     | 1619
-    csC      | 3
-    csHelix  | 8
-    csHelix2 | 82
-    LAM2     | 12
-    RC       | 183
-    H1C      | 813
-    aPS      | 11619
-2.Anderson Mixing: 0-off, 1-on, 2-mandatory
-3.wopt, wcmp
-4.minErr
-5.(ly/lx)^2, (lz/lx)^2
-6.0-A is matrix, 1-C is matrix
-6.hAB, hBC, hAC
-7.fA, fB, fC
-8.lx, ly, lz
-9.Nx, Ny, Nz
-10.Parameters filename
-11.Concentration filename
-12.ds0
-13.epA, epB, epC
