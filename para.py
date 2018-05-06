@@ -2,7 +2,7 @@ from tkinter import Tk
 from tkinter import Label
 from tkinter import Button
 from tkinter import Entry
-import os
+
 root = Tk()
 root.title("Para Generator")
 
