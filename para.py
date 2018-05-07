@@ -1,8 +1,4 @@
-from tkinter import Tk
-from tkinter import Label
-from tkinter import Button
-from tkinter import Entry
-from tkinter import Frame
+from tkinter import *
 import os
 
 root = Tk()
@@ -12,6 +8,8 @@ labels = ['Initiation method','Anderson Mixing Option','Max Normal Mixing Steps'
 defaults = ['0','1','100','0.050','0.100','0.001','1', '1','0','40.0', '40.0', '40.0','0.14', '0.26', '0.60','4.000', '4.000', '4.000','64', '64', '64','fet.dat','pha.dat','0.005','1', '1', '1']
 entry=[]
 frame = Frame(root)
+buttonframe = Frame(root)
+resultText = Text(root,height=20)
 
 for i in range(len(labels)):
     entry.append(Entry(frame))
@@ -35,18 +33,25 @@ def generate():
                 para.writelines('\n')
             index+=1
     para.close()
+    os.system("echo PARA GENERATED")
+    resultText.insert(END,"PARA GENERATED\n")
 
 def update():
-    os.system("bash update.bashrc")
+    p = os.popen("bash update.bashrc")
+    resultText.insert(END,p.read())
+    
 
 def run():
-    os.system("bash run.bashrc")
+    resultText.insert(END,"RUNNING\n")
+    p = os.popen("bash run.bashrc")
+    resultText.insert(END,p.read())
 
-frame.pack()
-buttonframe = Frame()
 Button(buttonframe, text='generate', command = generate).grid(row=0,column=0,padx=5)
 Button(buttonframe, text='update', command = update).grid(row=0,column=1,padx=5)
 Button(buttonframe, text='run', command = run).grid(row=0,column=2,padx=5)
+
+frame.pack()
 buttonframe.pack()
+resultText.pack()
 
 root.mainloop()
