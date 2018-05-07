@@ -2,6 +2,8 @@ from tkinter import Tk
 from tkinter import Label
 from tkinter import Button
 from tkinter import Entry
+from tkinter import Frame
+import os
 
 root = Tk()
 root.title("Para Generator")
@@ -9,10 +11,11 @@ root.title("Para Generator")
 labels = ['Initiation method','Anderson Mixing Option','Max Normal Mixing Steps','wopt','wcmp','maxErr','(ly/lx)^2','(lz/lx)^2','Matrix','hAB','hBC','hAC','fA','fB','fC','lx','ly','lz','Nx','Ny','Nz','Parameters Filename','Concentration Filename','ds0','epA','epB','epC']
 defaults = ['0','1','100','0.050','0.100','0.001','1', '1','0','40.0', '40.0', '40.0','0.14', '0.26', '0.60','4.000', '4.000', '4.000','64', '64', '64','fet.dat','pha.dat','0.005','1', '1', '1']
 entry=[]
+frame = Frame(root)
 
 for i in range(len(labels)):
-    entry.append(Entry(root))
-    Label(root, text=labels[i]).grid(row=i//3,column=(i%3)*2)
+    entry.append(Entry(frame))
+    Label(frame, text=labels[i]).grid(row=i//3,column=(i%3)*2)
     entry[i].insert(10,defaults[i])
     entry[i].grid(row=i//3,column=(i%3)*2+1)
 
@@ -32,7 +35,18 @@ def generate():
                 para.writelines('\n')
             index+=1
     para.close()
-    root.destroy()
 
-Button(root, text='generate', command = generate).grid(row=14,column=3)
+def update():
+    os.system("bash update.bashrc")
+
+def run():
+    os.system("bash run.bashrc")
+
+frame.pack()
+buttonframe = Frame()
+Button(buttonframe, text='generate', command = generate).grid(row=0,column=0,padx=5)
+Button(buttonframe, text='update', command = update).grid(row=0,column=1,padx=5)
+Button(buttonframe, text='run', command = run).grid(row=0,column=2,padx=5)
+buttonframe.pack()
+
 root.mainloop()
