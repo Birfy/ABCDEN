@@ -56,7 +56,7 @@ def run(path=''):
     for i in range(len(labels)):
         result.append(entry[i].get().strip())
 
-    runfile = open('run.bashrc','r')
+    runfile = open('run.bashrc','rU')
     lines = runfile.readlines()
 
     runfile = open('run.bashrc','w')
@@ -121,7 +121,6 @@ def openmultirun():
     mrframe.pack()
     Button(mrroot,text='run',command=multirun,width=10).pack()
     mrroot.mainloop()
-
 
 Button(buttonframe, text='generate',command=generate,width=10).grid(row=0,column=0,padx=5)
 Button(buttonframe, text='update',command=update,width=10).grid(row=0,column=1,padx=5)
