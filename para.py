@@ -68,7 +68,7 @@ def run():
 
     runfile = open('run.bashrc','w')
     for i in lines:
-        runfile.write(i.replace(result[len(result)-1],'$path'))
+        runfile.write(i)
     runfile.close()
 
 Button(buttonframe, text='generate', command = generate).grid(row=0,column=0,padx=5)
