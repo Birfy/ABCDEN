@@ -1,1 +1,1 @@
-python para.py
+python main.py

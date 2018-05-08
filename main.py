@@ -27,12 +27,18 @@ for i in range(len(labels)):
     entry[i].insert(10,defaults[i])
     entry[i].grid(row=i//3,column=(i%3)*2+1)
 
-def generate():
+def generate(fA='',fB='',fC=''):
+    global result
     result=[]
     for i in range(len(labels)):
         result.append(entry[i].get().strip())
 
-    para = open('para','w')
+    if fA:
+        result[12]=fA
+        result[13]=fB
+        result[14]=fC
+
+    para = open('para','w',newline='\n')
     columns=[1,2,2,1,2,1,3,3,3,3,1,1,1,3,1]
     index=0
     for item in columns:
@@ -51,15 +57,13 @@ def update():
     resultText.insert(END,p.read())
     
 
-def run(path=''):
-    result=[]
-    for i in range(len(labels)):
-        result.append(entry[i].get().strip())
+def run(path='',fA='',fB='',fC=''):
+    generate(fA,fB,fC)
 
-    runfile = open('run.bashrc','rU')
+    runfile = open('run.bashrc','r',newline='\n')
     lines = runfile.readlines()
 
-    runfile = open('run.bashrc','w')
+    runfile = open('run.bashrc','w',newline='\n')
     for i in lines:
         if not path:
             runfile.write(i.replace('$path',result[len(result)-1]))
@@ -70,7 +74,7 @@ def run(path=''):
     p = os.popen("bash run.bashrc")
     resultText.insert(END,p.read())
 
-    runfile = open('run.bashrc','w')
+    runfile = open('run.bashrc','w',newline='\n')
     for i in lines:
         runfile.write(i)
     runfile.close()
@@ -106,17 +110,16 @@ def openmultirun():
             #fa=float(fa)
             fb=eval('list(arange('+fb+'))')
             for i in fb:
-                run(path=result[-1]+'/a'+fa+'b'+str(i))
+                run(path=result[-1]+'/a'+fa+'b'+str(i),fA=fa,fB=str(i),fC=str(1-float(fa)-i))
         elif v.get()==1:
             fa=eval('list(arange('+fa+'))')
             #fb=float(fb)
             for i in fa:
-                run(path=result[-1]+'/a'+str(i)+'b'+fb)
+                run(path=result[-1]+'/a'+str(i)+'b'+fb,fA=str(i),fB=fb,fC=str(1-i-float(fb)))
         elif v.get()==2:
             fa=eval('list(arange('+fa+'))')
-            fc=float(fc)    
             for i in fa:
-                run(path=result[-1]+'/a'+str(i)+'b'+str(1-i-float(fc)))
+                run(path=result[-1]+'/a'+str(i)+'b'+str(1-i-float(fc)),fA=str(i),fB=str(1-i-float(fc)),fC=fc)
 
     mrframe.pack()
     Button(mrroot,text='run',command=multirun,width=10).pack()
