@@ -85,11 +85,15 @@ def openmultirun():
         result.append(entry[i].get().strip())
 
     mrroot = Tk()
+    mrroot.resizable(width=False,height=False)
     mrroot.title('Multirun')
 
     mrframe=Frame(mrroot)
     v=IntVar(mrroot)
     v.set(0)
+
+    
+
     Radiobutton(mrframe,text='fA',variable=v,value=0).grid(row=0,column=0,padx=5)
     Radiobutton(mrframe,text='fB',variable=v,value=1).grid(row=0,column=1,padx=5)
     Radiobutton(mrframe,text='fC',variable=v,value=2).grid(row=0,column=2,padx=5)
