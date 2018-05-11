@@ -88,8 +88,14 @@ def run(path='',fA='',fB='',fC=''):
             runfile.write(i)
         runfile.close()
 
-    t=threading.Thread(target=runonline)
-    t.start()
+    if path:
+        runonline()
+    else:
+        t=threading.Thread(target=runonline)
+        t.start()
+
+def downloadresult(pathlist):
+    print(pathlist)
 
 def openmultirun():
     result=[]
@@ -116,25 +122,53 @@ def openmultirun():
     entryfc.grid(row=1,column=2)
 
     def multirun():
+        def multirunonline():
+            fa=entryfa.get().strip()
+            fb=entryfb.get().strip()
+            fc=entryfc.get().strip()
+
+            if v.get()==0:
+                fb=eval('list(arange('+fb+'))')
+                for i in fb:
+                    run(path=result[-1]+'/a'+"%.3f" % float(fa)+'b'+"%.3f" % i,fA="%.3f" % float(fa),fB="%.3f" % i,fC="%.3f" % (1-float(fa)-i))
+            elif v.get()==1:
+                fa=eval('list(arange('+fa+'))')
+                for i in fa:
+                    run(path=result[-1]+'/a'+"%.3f" % i+'b'+"%.3f" % float(fb),fA="%.3f" % i,fB="%.3f" % float(fb),fC="%.3f" % (1-i-float(fb)))
+            elif v.get()==2:
+                fa=eval('list(arange('+fa+'))')
+                for i in fa:
+                    run(path=result[-1]+'/a'+"%.3f" % i+'b'+"%.3f" % (1-i-float(fc)),fA="%.3f" % i,fB="%.3f" % (1-i-float(fc)),fC="%.3f" % float(fc))
+
+        t=threading.Thread(target=multirunonline)
+        t.start()
+
+    def getresult():
         fa=entryfa.get().strip()
         fb=entryfb.get().strip()
         fc=entryfc.get().strip()
-
+        
+        pathlist=[]
         if v.get()==0:
             fb=eval('list(arange('+fb+'))')
             for i in fb:
-                run(path=result[-1]+'/a'+"%.3f" % float(fa)+'b'+"%.3f" % i,fA="%.3f" % float(fa),fB="%.3f" % i,fC="%.3f" % (1-float(fa)-i))
+                pathlist.append(result[-1]+'/a'+"%.3f" % float(fa)+'b'+"%.3f" % i)
         elif v.get()==1:
             fa=eval('list(arange('+fa+'))')
             for i in fa:
-                run(path=result[-1]+'/a'+"%.3f" % i+'b'+"%.3f" % float(fb),fA="%.3f" % i,fB="%.3f" % float(fb),fC="%.3f" % (1-i-float(fb)))
+                pathlist.append(result[-1]+'/a'+"%.3f" % i+'b'+"%.3f" % float(fb))
         elif v.get()==2:
             fa=eval('list(arange('+fa+'))')
             for i in fa:
-                run(path=result[-1]+'/a'+"%.3f" % i+'b'+"%.3f" % (1-i-float(fc)),fA="%.3f" % i,fB="%.3f" % (1-i-float(fc)),fC="%.3f" % float(fc))
+                pathlist.append(result[-1]+'/a'+"%.3f" % i+'b'+"%.3f" % (1-i-float(fc)))
+        downloadresult(pathlist)
+
+    btframe=Frame(mrroot)
+    Button(btframe,text='run',command=multirun,width=10).grid(row=0,column=0,padx=5)
+    Button(btframe,text='getresult',command=getresult,width=10).grid(row=0,column=1,padx=5)
 
     mrframe.pack()
-    Button(mrroot,text='run',command=multirun,width=10).pack()
+    btframe.pack()
     mrroot.mainloop()
 
 def getfile():
