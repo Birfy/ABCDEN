@@ -92,8 +92,6 @@ def openmultirun():
     v=IntVar(mrroot)
     v.set(0)
 
-    
-
     Radiobutton(mrframe,text='fA',variable=v,value=0).grid(row=0,column=0,padx=5)
     Radiobutton(mrframe,text='fB',variable=v,value=1).grid(row=0,column=1,padx=5)
     Radiobutton(mrframe,text='fC',variable=v,value=2).grid(row=0,column=2,padx=5)
@@ -111,19 +109,17 @@ def openmultirun():
         fc=entryfc.get().strip()
 
         if v.get()==0:
-            #fa=float(fa)
             fb=eval('list(arange('+fb+'))')
             for i in fb:
-                run(path=result[-1]+'/a'+fa+'b'+str(i),fA=fa,fB=str(i),fC=str(1-float(fa)-i))
+                run(path=result[-1]+'/a'+"%.3f" % float(fa)+'b'+"%.3f" % i,fA="%.3f" % float(fa),fB="%.3f" % i,fC="%.3f" % (1-float(fa)-i))
         elif v.get()==1:
             fa=eval('list(arange('+fa+'))')
-            #fb=float(fb)
             for i in fa:
-                run(path=result[-1]+'/a'+str(i)+'b'+fb,fA=str(i),fB=fb,fC=str(1-i-float(fb)))
+                run(path=result[-1]+'/a'+"%.3f" % i+'b'+"%.3f" % float(fb),fA="%.3f" % i,fB="%.3f" % float(fb),fC="%.3f" % (1-i-float(fb)))
         elif v.get()==2:
             fa=eval('list(arange('+fa+'))')
             for i in fa:
-                run(path=result[-1]+'/a'+str(i)+'b'+str(1-i-float(fc)),fA=str(i),fB=str(1-i-float(fc)),fC=fc)
+                run(path=result[-1]+'/a'+"%.3f" % i+'b'+"%.3f" % (1-i-float(fc)),fA="%.3f" % i,fB="%.3f" % (1-i-float(fc)),fC="%.3f" % float(fc))
 
     mrframe.pack()
     Button(mrroot,text='run',command=multirun,width=10).pack()
