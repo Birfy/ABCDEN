@@ -1,6 +1,8 @@
 from tkinter import *
 from numpy import arange
 import os
+import time
+import threading
 
 root = Tk()
 root.resizable(width=False, height=False)
@@ -53,31 +55,41 @@ def generate(fA='',fB='',fC=''):
     resultText.insert(END,"PARA GENERATED\n")
 
 def update():
-    p = os.popen("bash update.bashrc")
-    resultText.insert(END,p.read())
+    def updateonline():
+        resultText.insert(END,'UPDATING\n')
+        p = os.popen("bash update.bashrc")
+        resultText.insert(END,p.read())
+    
+    t=threading.Thread(target=updateonline)
+    t.start()
     
 
 def run(path='',fA='',fB='',fC=''):
-    generate(fA,fB,fC)
+    def runonline():
+        resultText.insert(END,'RUNNINGONLINE\n')
+        generate(fA,fB,fC)
 
-    runfile = open('run.bashrc','r',newline='\n')
-    lines = runfile.readlines()
+        runfile = open('run.bashrc','r',newline='\n')
+        lines = runfile.readlines()
 
-    runfile = open('run.bashrc','w',newline='\n')
-    for i in lines:
-        if not path:
-            runfile.write(i.replace('$path',result[len(result)-1]))
-        else:
-            runfile.write(i.replace('$path',path))
-    runfile.close()
+        runfile = open('run.bashrc','w',newline='\n')
+        for i in lines:
+            if not path:
+                runfile.write(i.replace('$path',result[len(result)-1]))
+            else:
+                runfile.write(i.replace('$path',path))
+        runfile.close()
 
-    p = os.popen("bash run.bashrc")
-    resultText.insert(END,p.read())
+        p = os.popen("bash run.bashrc")
+        resultText.insert(END,p.read())
 
-    runfile = open('run.bashrc','w',newline='\n')
-    for i in lines:
-        runfile.write(i)
-    runfile.close()
+        runfile = open('run.bashrc','w',newline='\n')
+        for i in lines:
+            runfile.write(i)
+        runfile.close()
+
+    t=threading.Thread(target=runonline)
+    t.start()
 
 def openmultirun():
     result=[]
@@ -125,10 +137,54 @@ def openmultirun():
     Button(mrroot,text='run',command=multirun,width=10).pack()
     mrroot.mainloop()
 
+def getfile():
+    def download():
+        resultText.insert(END,'DOWNLOADING\n')
+        result=[]
+        for i in range(len(labels)):
+            result.append(entry[i].get().strip())
+
+        runfile = open('getfile.bashrc','r',newline='\n')
+        lines = runfile.readlines()
+
+        runfile = open('getfile.bashrc','w',newline='\n')
+        for i in lines:
+            runfile.write(i.replace('$path',result[len(result)-1]))
+        runfile.close()
+
+        p = os.popen("bash getfile.bashrc")
+        resultText.insert(END,p.read())
+        runfile = open('getfile.bashrc','w',newline='\n')
+        for i in lines:
+            runfile.write(i)
+        runfile.close()
+
+    t=threading.Thread(target=download)
+    t.start()
+
+def matlab():
+    import matlab.engine
+
+    def plot():
+        resultText.insert(END,'PLOTTING\n')
+        eng = matlab.engine.start_matlab()
+        eng.plotphabc(nargout=0)
+        close = Tk()
+        close.geometry("400x0")
+        close.resizable(width=False,height=False)
+        close.title('Close me when finishing the figure')
+        close.mainloop()
+        eng.quit()
+    
+    t=threading.Thread(target=plot)
+    t.start()
+
 Button(buttonframe, text='generate',command=generate,width=10).grid(row=0,column=0,padx=5)
 Button(buttonframe, text='update',command=update,width=10).grid(row=0,column=1,padx=5)
 Button(buttonframe, text='run',command=run,width=10).grid(row=0,column=2,padx=5)
 Button(buttonframe, text='multirun',command=openmultirun,width=10).grid(row=0,column=3,padx=5)
+Button(buttonframe, text='getpha',command=getfile,width=10).grid(row=0,column=4,padx=5)
+Button(buttonframe, text='matlab',command=matlab,width=10).grid(row=0,column=5,padx=5)
 
 frame.pack()
 buttonframe.pack()
