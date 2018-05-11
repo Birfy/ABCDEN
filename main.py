@@ -178,17 +178,17 @@ def getfile():
         for i in range(len(labels)):
             result.append(entry[i].get().strip())
 
-        runfile = open('getfile.bashrc','r',newline='\n')
+        runfile = open('getpha.bashrc','r',newline='\n')
         lines = runfile.readlines()
 
-        runfile = open('getfile.bashrc','w',newline='\n')
+        runfile = open('getpha.bashrc','w',newline='\n')
         for i in lines:
             runfile.write(i.replace('$path',result[len(result)-1]))
         runfile.close()
 
-        p = os.popen("bash getfile.bashrc")
+        p = os.popen("bash getpha.bashrc")
         resultText.insert(END,p.read())
-        runfile = open('getfile.bashrc','w',newline='\n')
+        runfile = open('getpha.bashrc','w',newline='\n')
         for i in lines:
             runfile.write(i)
         runfile.close()
@@ -204,9 +204,9 @@ def matlab():
         eng = matlab.engine.start_matlab()
         eng.plotphabc(nargout=0)
         close = Tk()
-        close.geometry("400x0")
         close.resizable(width=False,height=False)
         close.title('Close me when finishing the figure')
+        Button(close, text='CLOSE',font=50,width=50,height=15,command=close.quit).pack()
         close.mainloop()
         eng.quit()
     
