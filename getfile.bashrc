@@ -1,2 +1,2 @@
-scp cdy@10.158.131.62:./nonfrustrated/pha.dat ./
+scp cdy@10.158.131.62:$path/pha.dat ./
 echo "FILE DOWNLOADED"
