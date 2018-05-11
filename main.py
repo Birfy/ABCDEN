@@ -11,6 +11,7 @@ root.title("ABCDEN")
 labels = ['Initiation method','Anderson Mixing Option','Max Normal Mixing Steps','wopt','wcmp','maxErr','(ly/lx)^2','(lz/lx)^2','Matrix','hAB','hBC','hAC','fA','fB','fC','lx','ly','lz','Nx','Ny','Nz','Parameters Filename','Concentration Filename','ds0','epA','epB','epC','path']
 defaults=[]
 result=[]
+eng=None
 
 para = open('para','r')
 for item in para.readlines():
@@ -29,7 +30,15 @@ for i in range(len(labels)):
     entry[i].insert(10,defaults[i])
     entry[i].grid(row=i//3,column=(i%3)*2+1)
 
-def generate(fA='',fB='',fC=''):
+def loadmatlab():
+    global eng
+    import matlab.engine
+    resultText.insert(END,'LOADINGMATLAB\n')
+    eng=matlab.engine.start_matlab()
+    btmatlab.grid(row=0,column=6,padx=5)
+    resultText.insert(END,'MATLABLOADED\n')
+
+def generate(fA='',fB='',fC='',lx=''):
     global result
     result=[]
     for i in range(len(labels)):
@@ -39,6 +48,11 @@ def generate(fA='',fB='',fC=''):
         result[12]=fA
         result[13]=fB
         result[14]=fC
+
+    if lx:
+        result[15]="%.3f" % (lx*float(result[15]))
+        result[16]="%.3f" % (lx*float(result[16]))
+        result[17]="%.3f" % (lx*float(result[17]))
 
     para = open('para','w',newline='\n')
     columns=[1,2,2,1,2,1,3,3,3,3,1,1,1,3,1]
@@ -64,10 +78,10 @@ def update():
     t.start()
     
 
-def run(path='',fA='',fB='',fC=''):
+def run(path='',fA='',fB='',fC='',lx=0.0):
     def runonline():
         resultText.insert(END,'RUNNINGONLINE\n')
-        generate(fA,fB,fC)
+        generate(fA,fB,fC,lx)
 
         runfile = open('run.bashrc','r',newline='\n')
         lines = runfile.readlines()
@@ -95,7 +109,31 @@ def run(path='',fA='',fB='',fC=''):
         t.start()
 
 def downloadresult(pathlist):
-    print(pathlist)
+    def downloadresultonline():
+        writefile = open("./freeE/"+pathlist[0].split('/')[-1]+'-'+pathlist[-1].split('/')[-1],'w',newline='\n')
+        for i in pathlist:
+            resultText.insert(END,"DOWNLOADING\n")
+
+            runfile = open('getfree.bashrc','r',newline='\n')
+            lines = runfile.readlines()
+
+            runfile = open('getfree.bashrc','w',newline='\n')
+            for j in lines:
+                runfile.write(j.replace('$path',i))
+            runfile.close()
+
+            p = os.popen("bash getfree.bashrc")
+            writefile.write(p.read())
+
+            runfile = open('getfree.bashrc','w',newline='\n')
+            for j in lines:
+                runfile.write(j)
+            runfile.close()
+        writefile.close()
+        resultText.insert(END,"FREEDOWNLOADED\n")
+    t=threading.Thread(target=downloadresultonline)
+    t.start()
+
 
 def openmultirun():
     result=[]
@@ -171,6 +209,49 @@ def openmultirun():
     btframe.pack()
     mrroot.mainloop()
 
+def openmultilx():
+    result=[]
+    for i in range(len(labels)):
+        result.append(entry[i].get().strip())
+
+    mrroot = Tk()
+    mrroot.resizable(width=False,height=False)
+    mrroot.title('Multilx')
+
+    mrframe=Frame(mrroot)
+    Label(mrframe,text='lx/lx0').grid(row=0,column=0,padx=5)
+
+    entrylx=Entry(mrframe)
+    entrylx.grid(row=0,column=1,padx=5)
+
+    def multilx():
+        def multilxonline():
+            lx=entrylx.get().strip()
+
+            lx=eval('list(arange('+lx+'))')
+            for i in lx:
+                run(path=result[-1]+'/a'+"%.3f" % float(result[12])+'b'+"%.3f" % float(result[13])+"x"+"%.3f" % (i*float(result[15])),lx=i)
+
+        t=threading.Thread(target=multilxonline)
+        t.start()
+
+    def getresult():
+        lx=entrylx.get().strip()
+        
+        pathlist=[]
+        lx=eval('list(arange('+lx+'))')
+        for i in lx:
+            pathlist.append(result[-1]+'/a'+"%.3f" % float(result[12])+'b'+"%.3f" % float(result[13])+'x'+"%.3f" % (i*float(result[15])))
+        downloadresult(pathlist)
+
+    btframe=Frame(mrroot)
+    Button(btframe,text='run',command=multilx,width=10).grid(row=0,column=0,padx=5)
+    Button(btframe,text='getresult',command=getresult,width=10).grid(row=0,column=1,padx=5)
+
+    mrframe.pack()
+    btframe.pack()
+    mrroot.mainloop()
+
 def getfile():
     def download():
         resultText.insert(END,'DOWNLOADING\n')
@@ -197,18 +278,9 @@ def getfile():
     t.start()
 
 def matlab():
-    import matlab.engine
-
     def plot():
         resultText.insert(END,'PLOTTING\n')
-        eng = matlab.engine.start_matlab()
         eng.plotphabc(nargout=0)
-        close = Tk()
-        close.resizable(width=False,height=False)
-        close.title('Close me when finishing the figure')
-        Button(close, text='CLOSE',font=50,width=50,height=15,command=close.quit).pack()
-        close.mainloop()
-        eng.quit()
     
     t=threading.Thread(target=plot)
     t.start()
@@ -217,11 +289,17 @@ Button(buttonframe, text='generate',command=generate,width=10).grid(row=0,column
 Button(buttonframe, text='update',command=update,width=10).grid(row=0,column=1,padx=5)
 Button(buttonframe, text='run',command=run,width=10).grid(row=0,column=2,padx=5)
 Button(buttonframe, text='multirun',command=openmultirun,width=10).grid(row=0,column=3,padx=5)
-Button(buttonframe, text='getpha',command=getfile,width=10).grid(row=0,column=4,padx=5)
-Button(buttonframe, text='matlab',command=matlab,width=10).grid(row=0,column=5,padx=5)
+Button(buttonframe, text='multilx',command=openmultilx,width=10).grid(row=0,column=4,padx=5)
+Button(buttonframe, text='getpha',command=getfile,width=10).grid(row=0,column=5,padx=5)
+btmatlab = Button(buttonframe, text='matlab',command=matlab,width=10)
+
 
 frame.pack()
 buttonframe.pack()
 resultText.pack()
 
+t=threading.Thread(target=loadmatlab)
+t.start()
+
 root.mainloop()
+eng.quit()
