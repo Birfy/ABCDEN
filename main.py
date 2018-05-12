@@ -210,15 +210,15 @@ def openmultirun():
             if v.get()==0:
                 fb=eval('list(arange('+fb+'))')
                 for i in fb:
-                    run(path=result[-1]+'/a'+"%.3f" % float(fa)+'b'+"%.3f" % i,fA="%.3f" % float(fa),fB="%.3f" % i,fC="%.3f" % (1-float(fa)-i))
+                    run(path=result[-1]+'/a'+"%.3f" % float(fa)+'b'+"%.3f" % i+'x'+result[15],fA="%.3f" % float(fa),fB="%.3f" % i,fC="%.3f" % (1-float(fa)-i))
             elif v.get()==1:
                 fa=eval('list(arange('+fa+'))')
                 for i in fa:
-                    run(path=result[-1]+'/a'+"%.3f" % i+'b'+"%.3f" % float(fb),fA="%.3f" % i,fB="%.3f" % float(fb),fC="%.3f" % (1-i-float(fb)))
+                    run(path=result[-1]+'/a'+"%.3f" % i+'b'+"%.3f" % float(fb)+'x'+result[15],fA="%.3f" % i,fB="%.3f" % float(fb),fC="%.3f" % (1-i-float(fb)))
             elif v.get()==2:
                 fa=eval('list(arange('+fa+'))')
                 for i in fa:
-                    run(path=result[-1]+'/a'+"%.3f" % i+'b'+"%.3f" % (1-i-float(fc)),fA="%.3f" % i,fB="%.3f" % (1-i-float(fc)),fC="%.3f" % float(fc))
+                    run(path=result[-1]+'/a'+"%.3f" % i+'b'+"%.3f" % (1-i-float(fc))+'x'+result[15],fA="%.3f" % i,fB="%.3f" % (1-i-float(fc)),fC="%.3f" % float(fc))
 
         t=threading.Thread(target=multirunonline)
         t.start()
@@ -235,15 +235,15 @@ def openmultirun():
         if v.get()==0:
             fb=eval('list(arange('+fb+'))')
             for i in fb:
-                pathlist.append(result[-1]+'/a'+"%.3f" % float(fa)+'b'+"%.3f" % i)
+                pathlist.append(result[-1]+'/a'+"%.3f" % float(fa)+'b'+"%.3f" % i+'x'+result[15])
         elif v.get()==1:
             fa=eval('list(arange('+fa+'))')
             for i in fa:
-                pathlist.append(result[-1]+'/a'+"%.3f" % i+'b'+"%.3f" % float(fb))
+                pathlist.append(result[-1]+'/a'+"%.3f" % i+'b'+"%.3f" % float(fb)+'x'+result[15])
         elif v.get()==2:
             fa=eval('list(arange('+fa+'))')
             for i in fa:
-                pathlist.append(result[-1]+'/a'+"%.3f" % i+'b'+"%.3f" % (1-i-float(fc)))
+                pathlist.append(result[-1]+'/a'+"%.3f" % i+'b'+"%.3f" % (1-i-float(fc))+'x'+result[15])
         downloadresult(pathlist)
 
     btframe=Frame(mrroot)
@@ -323,7 +323,7 @@ def getfile():
 
         runfile = open('getpha.bashrc','w',newline='\n')
         for i in lines:
-            runfile.write(i.replace('$path',result[len(result)-1]))
+            runfile.write(i.replace('$path',result[len(result)-1]+'/a'+result[12]+'b'+result[13]+'x'+result[15]))
         runfile.close()
 
         p = os.popen("bash getpha.bashrc")
