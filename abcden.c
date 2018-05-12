@@ -1540,9 +1540,9 @@ double freeE(double *wA, double *wB, double *wC, double *phA, double *phB, doubl
 			write_ph(phA, phB, phC, wA, wB, wC);
 	} while (iter < maxIter && (inCompMax > Sm1 || freeDiff > Sm2));
 
-	fp = fopen("result.dat", "w");
+	fp = fopen("printout.txt", "a");
 	fprintf(fp, "%d\n", iter);
-	fprintf(fp, "%10.8e, %10.8e, %10.8e, %e\n", freeEnergy, freeAB, freeW, freeS, inCompMax);
+	fprintf(fp, "%10.8e, %10.8e, %10.8e, %10.8e, %e\n", freeEnergy, freeAB, freeW, freeS, inCompMax);
 	fclose(fp);
 	//fclose(fp1);
 	write_ph(phA, phB, phC, wA, wB, wC);

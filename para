@@ -1,4 +1,4 @@
-233
+633
 1, 100
 0.050, 0.100
 0.001
@@ -12,4 +12,4 @@ fet.dat
 pha.dat
 0.005
 1, 1, 1
-./nonfrustrated/BCC
+./nonfrustrated/FCC

@@ -39,6 +39,10 @@ for i in range(len(labels)):
     entry[i].insert(10,defaults[i])
     entry[i].grid(row=i//3,column=(i%3)*2+1)
 
+def setText(text):
+    resultText.insert(END,text)
+    resultText.see(END)
+
 def loadmatlab():
     '''
     Begin to load Matlab
@@ -46,10 +50,10 @@ def loadmatlab():
     '''
     global eng
     import matlab.engine
-    resultText.insert(END,'LOADINGMATLAB\n')
+    setText('LOADINGMATLAB\n')
     eng=matlab.engine.start_matlab()
     btmatlab.grid(row=0,column=6,padx=5) #Button is added when finish loading matlab
-    resultText.insert(END,'MATLABLOADED\n')
+    setText('MATLABLOADED\n')
 
 def generate(fA='',fB='',fC='',lx=0.0):
     '''
@@ -83,16 +87,16 @@ def generate(fA='',fB='',fC='',lx=0.0):
                 para.writelines('\n')
             index+=1
     para.close()
-    resultText.insert(END,"PARA GENERATED\n")
+    setText("PARA GENERATED\n")
 
 def update():
     '''
     Upload para file to ./update in Linux
     '''
     def updateonline():
-        resultText.insert(END,'UPDATING\n')
+        setText('UPDATING\n')
         p = os.popen("bash update.bashrc")
-        resultText.insert(END,p.read())
+        setText(p.read())
     
     t=threading.Thread(target=updateonline)
     t.start()
@@ -104,7 +108,8 @@ def run(path='',fA='',fB='',fC='',lx=0.0):
     Run the abcden file on path
     '''
     def runonline():
-        resultText.insert(END,'RUNNINGONLINE\n')
+        setText('RUNNINGONLINE\n')
+
         generate(fA,fB,fC,lx)
 
         runfile = open('run.bashrc','r',newline='\n')
@@ -119,7 +124,7 @@ def run(path='',fA='',fB='',fC='',lx=0.0):
         runfile.close()
 
         p = os.popen("bash run.bashrc")
-        resultText.insert(END,p.read())
+        setText(p.read())
 
         runfile = open('run.bashrc','w',newline='\n')
         for i in lines:
@@ -144,7 +149,7 @@ def downloadresult(pathlist):
     def downloadresultonline():
         writefile = open("./freeE/"+result[0]+'/'+pathlist[0].split('/')[-1]+'-'+pathlist[-1].split('/')[-1],'w',newline='\n')
         for i in pathlist:
-            resultText.insert(END,"DOWNLOADING\n")
+            setText("DOWNLOADING\n")
 
             runfile = open('getfree.bashrc','r',newline='\n')
             lines = runfile.readlines()
@@ -162,7 +167,7 @@ def downloadresult(pathlist):
                 runfile.write(j)
             runfile.close()
         writefile.close()
-        resultText.insert(END,"FREEDOWNLOADED\n")
+        setText("FREEDOWNLOADED\n")
     t=threading.Thread(target=downloadresultonline)
     t.start()
 
@@ -313,7 +318,7 @@ def getfile():
     Down the pha.dat file from path
     '''
     def download():
-        resultText.insert(END,'DOWNLOADING\n')
+        setText('DOWNLOADING\n')
         result=[]
         for i in range(len(labels)):
             result.append(entry[i].get().strip())
@@ -323,11 +328,11 @@ def getfile():
 
         runfile = open('getpha.bashrc','w',newline='\n')
         for i in lines:
-            runfile.write(i.replace('$path',result[len(result)-1]+'/a'+result[12]+'b'+result[13]+'x'+result[15]))
+            runfile.write(i.replace('$path',result[len(result)-1]))
         runfile.close()
 
         p = os.popen("bash getpha.bashrc")
-        resultText.insert(END,p.read())
+        setText(p.read())
         runfile = open('getpha.bashrc','w',newline='\n')
         for i in lines:
             runfile.write(i)
@@ -341,7 +346,7 @@ def matlab():
     Using matlab to plot
     '''
     def plot():
-        resultText.insert(END,'PLOTTING\n')
+        setText('PLOTTING\n')
         eng.plotphabc(nargout=0)
     
     t=threading.Thread(target=plot)
