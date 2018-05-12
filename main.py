@@ -3,7 +3,6 @@ ABCDEN SCFT GUI PROGRAM
 Package needed:
     Matlab API for Python
     numpy
-    tkinter
 '''
 
 from tkinter import *
@@ -138,8 +137,12 @@ def downloadresult(pathlist):
     Download the freeE in printout.txt from paths in pathlist and save to a file in ./freeE/
     File name is generated according to fA, fB, fC and lx
     '''
+    result=[]
+    for i in range(len(labels)):
+        result.append(entry[i].get().strip())
+
     def downloadresultonline():
-        writefile = open("./freeE/"+pathlist[0].split('/')[-1]+'-'+pathlist[-1].split('/')[-1],'w',newline='\n')
+        writefile = open("./freeE/"+result[0]+'/'+pathlist[0].split('/')[-1]+'-'+pathlist[-1].split('/')[-1],'w',newline='\n')
         for i in pathlist:
             resultText.insert(END,"DOWNLOADING\n")
 
