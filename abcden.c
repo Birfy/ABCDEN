@@ -570,8 +570,8 @@ void initW_csFCC(double *wA, double *wB, double *wC)
 	FILE *fp;
 	fp = fopen("init_csFCC.dat", "w");
 
-	ra = pow((fAinit / (fA + fB + fC) * lx * ly * lz / (16 * 4.0 * Pi / 3.0)), 1.0 / 3);
-	rb = pow(((fAinit + fBinit) / (fA + fB + fC) * lx * ly * lz / (16 * 4.0 * Pi / 3.0)), 1.0 / 3);
+	ra = pow((fAinit / (fA + fB + fC) * lx * ly * lz / (8 * 4.0 * Pi / 3.0)), 1.0 / 3);
+	rb = pow(((fAinit + fBinit) / (fA + fB + fC) * lx * ly * lz / (8 * 4.0 * Pi / 3.0)), 1.0 / 3);
 
 	xc[0] = 0.0;
 	yc[0] = 0.0;
@@ -599,25 +599,22 @@ void initW_csFCC(double *wA, double *wB, double *wC)
 	zc[7] = 0.0;
 	xc[8] = lx / 2;
 	yc[8] = ly / 2;
-	zc[8] = lz / 2;
+	zc[8] = 0.0;
 	xc[9] = lx / 2;
 	yc[9] = ly / 2;
-	zc[9] = 0.0;
-	xc[10] = lx / 2;
+	zc[9] = lz;
+	xc[10] = 0.0;
 	yc[10] = ly / 2;
-	zc[10] = lz;
-	xc[11] = 0.0;
+	zc[10] = lz / 2;
+	xc[11] = lx;
 	yc[11] = ly / 2;
 	zc[11] = lz / 2;
-	xc[12] = lx;
-	yc[12] = ly / 2;
+	xc[12] = lx / 2;
+	yc[12] = 0.0;
 	zc[12] = lz / 2;
 	xc[13] = lx / 2;
-	yc[13] = 0.0;
+	yc[13] = ly;
 	zc[13] = lz / 2;
-	xc[14] = lx / 2;
-	yc[14] = ly;
-	zc[14] = lz / 2;
 
 	for (i = 0; i < Nx; i++)
 	{
@@ -629,7 +626,7 @@ void initW_csFCC(double *wA, double *wB, double *wC)
 			{
 				zk = k * dz;
 				tag = 0;
-				for (nc = 0; nc < 15; nc++)
+				for (nc = 0; nc < 14; nc++)
 				{
 					xij = xi - xc[nc];
 					yij = yj - yc[nc];
