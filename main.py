@@ -1,7 +1,14 @@
+'''
+ABCDEN SCFT GUI PROGRAM
+Package needed:
+    Matlab API for Python
+    numpy
+    tkinter
+'''
+
 from tkinter import *
 from numpy import arange
 import os
-import time
 import threading
 
 root = Tk()
@@ -9,10 +16,13 @@ root.resizable(width=False, height=False)
 root.title("ABCDEN")
 
 labels = ['Initiation method','Anderson Mixing Option','Max Normal Mixing Steps','wopt','wcmp','maxErr','(ly/lx)^2','(lz/lx)^2','Matrix','hAB','hBC','hAC','fA','fB','fC','lx','ly','lz','Nx','Ny','Nz','Parameters Filename','Concentration Filename','ds0','epA','epB','epC','path']
+
+#Defining global variables to use in different functions
 defaults=[]
 result=[]
-eng=None
+eng=None 
 
+#Read paras from file
 para = open('para','r')
 for item in para.readlines():
     for element in item.strip('\n').split(', '):
@@ -31,14 +41,22 @@ for i in range(len(labels)):
     entry[i].grid(row=i//3,column=(i%3)*2+1)
 
 def loadmatlab():
+    '''
+    Begin to load Matlab
+    Matlab button added when finish loading
+    '''
     global eng
     import matlab.engine
     resultText.insert(END,'LOADINGMATLAB\n')
     eng=matlab.engine.start_matlab()
-    btmatlab.grid(row=0,column=6,padx=5)
+    btmatlab.grid(row=0,column=6,padx=5) #Button is added when finish loading matlab
     resultText.insert(END,'MATLABLOADED\n')
 
-def generate(fA='',fB='',fC='',lx=''):
+def generate(fA='',fB='',fC='',lx=0.0):
+    '''
+    Read paras from Entries and write to para file
+    If fA, fB, fC or lx is substituted if not empty
+    '''
     global result
     result=[]
     for i in range(len(labels)):
@@ -69,6 +87,9 @@ def generate(fA='',fB='',fC='',lx=''):
     resultText.insert(END,"PARA GENERATED\n")
 
 def update():
+    '''
+    Upload para file to ./update in Linux
+    '''
     def updateonline():
         resultText.insert(END,'UPDATING\n')
         p = os.popen("bash update.bashrc")
@@ -79,6 +100,10 @@ def update():
     
 
 def run(path='',fA='',fB='',fC='',lx=0.0):
+    '''
+    Copy the abcden file from ./update to path and para file to path in Server
+    Run the abcden file on path
+    '''
     def runonline():
         resultText.insert(END,'RUNNINGONLINE\n')
         generate(fA,fB,fC,lx)
@@ -109,6 +134,10 @@ def run(path='',fA='',fB='',fC='',lx=0.0):
         t.start()
 
 def downloadresult(pathlist):
+    '''
+    Download the freeE in printout.txt from paths in pathlist and save to a file in ./freeE/
+    File name is generated according to fA, fB, fC and lx
+    '''
     def downloadresultonline():
         writefile = open("./freeE/"+pathlist[0].split('/')[-1]+'-'+pathlist[-1].split('/')[-1],'w',newline='\n')
         for i in pathlist:
@@ -136,6 +165,13 @@ def downloadresult(pathlist):
 
 
 def openmultirun():
+    '''
+    Open a new window
+    Check the radiobutton to assign a constant f
+    Input the range of the first f besided the constant f
+    The rest will be automatically calculated
+    Range: begin,end,gap
+    '''
     result=[]
     for i in range(len(labels)):
         result.append(entry[i].get().strip())
@@ -160,6 +196,9 @@ def openmultirun():
     entryfc.grid(row=1,column=2)
 
     def multirun():
+        '''
+        Run abcdens in the range
+        '''
         def multirunonline():
             fa=entryfa.get().strip()
             fb=entryfb.get().strip()
@@ -182,6 +221,9 @@ def openmultirun():
         t.start()
 
     def getresult():
+        '''
+        Get the freeE result in the range
+        '''
         fa=entryfa.get().strip()
         fb=entryfb.get().strip()
         fc=entryfc.get().strip()
@@ -210,6 +252,11 @@ def openmultirun():
     mrroot.mainloop()
 
 def openmultilx():
+    '''
+    Open a new window
+    Input the range of lx/lx0
+    Range: begin,end,gap
+    '''
     result=[]
     for i in range(len(labels)):
         result.append(entry[i].get().strip())
@@ -225,6 +272,9 @@ def openmultilx():
     entrylx.grid(row=0,column=1,padx=5)
 
     def multilx():
+        '''
+        Run abcdens in the range
+        '''
         def multilxonline():
             lx=entrylx.get().strip()
 
@@ -236,6 +286,9 @@ def openmultilx():
         t.start()
 
     def getresult():
+        '''
+        Get the freeE results in the range
+        '''
         lx=entrylx.get().strip()
         
         pathlist=[]
@@ -253,6 +306,9 @@ def openmultilx():
     mrroot.mainloop()
 
 def getfile():
+    '''
+    Down the pha.dat file from path
+    '''
     def download():
         resultText.insert(END,'DOWNLOADING\n')
         result=[]
@@ -278,6 +334,9 @@ def getfile():
     t.start()
 
 def matlab():
+    '''
+    Using matlab to plot
+    '''
     def plot():
         resultText.insert(END,'PLOTTING\n')
         eng.plotphabc(nargout=0)
@@ -292,7 +351,6 @@ Button(buttonframe, text='multirun',command=openmultirun,width=10).grid(row=0,co
 Button(buttonframe, text='multilx',command=openmultilx,width=10).grid(row=0,column=4,padx=5)
 Button(buttonframe, text='getpha',command=getfile,width=10).grid(row=0,column=5,padx=5)
 btmatlab = Button(buttonframe, text='matlab',command=matlab,width=10)
-
 
 frame.pack()
 buttonframe.pack()
