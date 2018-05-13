@@ -347,7 +347,27 @@ def matlab():
     '''
     def plot():
         setText('PLOTTING\n')
+
+        result=[]
+        for i in range(len(labels)):
+            result.append(entry[i].get().strip())
+
+        runfile = open('plotphabc.m','r',newline='\n')
+        lines = runfile.readlines()
+
+        runfile = open('plotphabc.m','w',newline='\n')
+        for i in lines:
+            runfile.write(i.replace('$Nx',result[18]).replace('$Ny',result[19]).replace('$Nz',result[20]))
+        runfile.close()
+
         eng.plotphabc(nargout=0)
+
+        runfile = open('plotphabc.m','w',newline='\n')
+        for i in lines:
+            runfile.write(i)
+        runfile.close()
+
+        
     
     t=threading.Thread(target=plot)
     t.start()
