@@ -215,15 +215,15 @@ def openmultirun():
             if v.get()==0:
                 fb=eval('list(arange('+fb+'))')
                 for i in fb:
-                    run(path=result[-1]+'/a'+"%.3f" % float(fa)+'b'+"%.3f" % i+'x'+result[15],fA="%.3f" % float(fa),fB="%.3f" % i,fC="%.3f" % (1-float(fa)-i))
+                    run(path=result[-1]+'/'+result[0]+'/a'+"%.3f" % float(fa)+'b'+"%.3f" % i+'x'+result[15],fA="%.3f" % float(fa),fB="%.3f" % i,fC="%.3f" % (1-float(fa)-i))
             elif v.get()==1:
                 fa=eval('list(arange('+fa+'))')
                 for i in fa:
-                    run(path=result[-1]+'/a'+"%.3f" % i+'b'+"%.3f" % float(fb)+'x'+result[15],fA="%.3f" % i,fB="%.3f" % float(fb),fC="%.3f" % (1-i-float(fb)))
+                    run(path=result[-1]+'/'+result[0]+'/a'+"%.3f" % i+'b'+"%.3f" % float(fb)+'x'+result[15],fA="%.3f" % i,fB="%.3f" % float(fb),fC="%.3f" % (1-i-float(fb)))
             elif v.get()==2:
                 fa=eval('list(arange('+fa+'))')
                 for i in fa:
-                    run(path=result[-1]+'/a'+"%.3f" % i+'b'+"%.3f" % (1-i-float(fc))+'x'+result[15],fA="%.3f" % i,fB="%.3f" % (1-i-float(fc)),fC="%.3f" % float(fc))
+                    run(path=result[-1]+'/'+result[0]+'/a'+"%.3f" % i+'b'+"%.3f" % (1-i-float(fc))+'x'+result[15],fA="%.3f" % i,fB="%.3f" % (1-i-float(fc)),fC="%.3f" % float(fc))
 
         t=threading.Thread(target=multirunonline)
         t.start()
@@ -240,15 +240,15 @@ def openmultirun():
         if v.get()==0:
             fb=eval('list(arange('+fb+'))')
             for i in fb:
-                pathlist.append(result[-1]+'/a'+"%.3f" % float(fa)+'b'+"%.3f" % i+'x'+result[15])
+                pathlist.append(result[-1]+'/'+result[0]+'/a'+"%.3f" % float(fa)+'b'+"%.3f" % i+'x'+result[15])
         elif v.get()==1:
             fa=eval('list(arange('+fa+'))')
             for i in fa:
-                pathlist.append(result[-1]+'/a'+"%.3f" % i+'b'+"%.3f" % float(fb)+'x'+result[15])
+                pathlist.append(result[-1]+'/'+result[0]+'/a'+"%.3f" % i+'b'+"%.3f" % float(fb)+'x'+result[15])
         elif v.get()==2:
             fa=eval('list(arange('+fa+'))')
             for i in fa:
-                pathlist.append(result[-1]+'/a'+"%.3f" % i+'b'+"%.3f" % (1-i-float(fc))+'x'+result[15])
+                pathlist.append(result[-1]+'/'+result[0]+'/a'+"%.3f" % i+'b'+"%.3f" % (1-i-float(fc))+'x'+result[15])
         downloadresult(pathlist)
 
     btframe=Frame(mrroot)
@@ -288,7 +288,7 @@ def openmultilx():
 
             lx=eval('list(arange('+lx+'))')
             for i in lx:
-                run(path=result[-1]+'/a'+"%.3f" % float(result[12])+'b'+"%.3f" % float(result[13])+"x"+"%.3f" % (i*float(result[15])),lx=i)
+                run(path=result[-1]+'/'+result[0]+'/a'+"%.3f" % float(result[12])+'b'+"%.3f" % float(result[13])+"x"+"%.3f" % (i*float(result[15])),lx=i)
 
         t=threading.Thread(target=multilxonline)
         t.start()
@@ -302,7 +302,7 @@ def openmultilx():
         pathlist=[]
         lx=eval('list(arange('+lx+'))')
         for i in lx:
-            pathlist.append(result[-1]+'/a'+"%.3f" % float(result[12])+'b'+"%.3f" % float(result[13])+'x'+"%.3f" % (i*float(result[15])))
+            pathlist.append(result[-1]+'/'+result[0]+'/a'+"%.3f" % float(result[12])+'b'+"%.3f" % float(result[13])+'x'+"%.3f" % (i*float(result[15])))
         downloadresult(pathlist)
 
     btframe=Frame(mrroot)
