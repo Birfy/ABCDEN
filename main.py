@@ -52,7 +52,7 @@ def loadmatlab():
     import matlab.engine
     setText('LOADINGMATLAB\n')
     eng=matlab.engine.start_matlab()
-    btmatlab.grid(row=0,column=6,padx=5) #Button is added when finish loading matlab
+    btmatlab.grid(row=0,column=7,padx=5) #Button is added when finish loading matlab
     setText('MATLABLOADED\n')
 
 def generate(fA='',fB='',fC='',lx=0.0):
@@ -365,11 +365,17 @@ def matlab():
         runfile = open('plotphabc.m','w',newline='\n')
         for i in lines:
             runfile.write(i)
-        runfile.close()
-
-        
+        runfile.close()        
     
     t=threading.Thread(target=plot)
+    t.start()
+
+def top():
+    def gettop():
+        setText('TOPPING\n')
+        p=os.popen('bash top.bashrc')
+        setText(p.read())
+    t=threading.Thread(target=gettop)
     t.start()
 
 Button(buttonframe, text='generate',command=generate,width=10).grid(row=0,column=0,padx=5)
@@ -377,7 +383,8 @@ Button(buttonframe, text='update',command=update,width=10).grid(row=0,column=1,p
 Button(buttonframe, text='run',command=run,width=10).grid(row=0,column=2,padx=5)
 Button(buttonframe, text='multirun',command=openmultirun,width=10).grid(row=0,column=3,padx=5)
 Button(buttonframe, text='multilx',command=openmultilx,width=10).grid(row=0,column=4,padx=5)
-Button(buttonframe, text='getpha',command=getfile,width=10).grid(row=0,column=5,padx=5)
+Button(buttonframe, text='top',command=top,width=10).grid(row=0,column=5,padx=5)
+Button(buttonframe, text='getpha',command=getfile,width=10).grid(row=0,column=6,padx=5)
 btmatlab = Button(buttonframe, text='matlab',command=matlab,width=10)
 
 frame.pack()

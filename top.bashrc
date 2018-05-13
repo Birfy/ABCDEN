@@ -1,0 +1,1 @@
+ssh cdy@10.158.131.62 "rsh c0103 'ps -A|grep abcden'"
