@@ -15,7 +15,7 @@ dx=0.3;
 dy=0.3;
 dz=0.3;
 
-n=2;
+n=1;
 
 [X,Y,Z]=meshgrid(dy:dy:Ny*dy*n,dx:dx:Nx*dx*n,dz:dz:Nz*dz*n);
 
