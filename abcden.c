@@ -33,12 +33,13 @@ void initW_csBCC(double *wA, double *wB, double *wC);
 void initW_csFCC(double *wA, double *wB, double *wC);
 void initW_csPS(double *wA, double *wB, double *wC);
 void initW_csC(double *wA, double *wB, double *wC);
-void initW_LAM2(double *wA, double *wB, double *wC);
 void initW_csHelix(double *wA, double *wB, double *wC);
+void initW_csHelix2(double *wA, double *wB, double *wC);
+void initW_csG(double *wA, double *wB, double *wC);
+void initW_LAM2(double *wA, double *wB, double *wC);
 void initW_RC(double *wA, double *wB, double *wC);
 void initW_H1C(double *wA, double *wB, double *wC);
 void initW_aPS(double *wA, double *wB, double *wC);
-void initW_csHelix2(double *wA, double *wB, double *wC);
 
 int ZDIMM, NsA, NsB, NsC, NsB1, NsB2, NsB3;
 double lx, ly, lz, ds0;
@@ -220,6 +221,8 @@ void init(int in, double *wA, double *wB, double *wC)
 		initW_aPS(wA, wB, wC);
 	else if (in == 82)
 		initW_csHelix2(wA, wB, wC);
+	else if (in == 7)
+		initW_csG(wA, wB, wC);
 	else if (in == 1)
 	{
 		fp = fopen("in.d", "r");
@@ -738,6 +741,69 @@ void initW_csPS(double *wA, double *wB, double *wC)
 						{
 							tag = 2;
 						}
+					}
+				}
+				phat = 0.0;
+				phbt = 0.0;
+				phct = 1.0;
+
+				if (tag == 1)
+				{
+					phat = 0.0;
+					phbt = 1.0;
+					phct = 0.0;
+				}
+				else if (tag == 2)
+				{
+					phat = 1.0;
+					phbt = 0.0;
+					phct = 0.0;
+				}
+				ijk = (long)((i * Ny + j) * Nz + k);
+				wA[ijk] = hAB * phbt + hAC * phct + 0.040 * (drand48() - 0.5);
+				wB[ijk] = hAB * phat + hBC * phct + 0.040 * (drand48() - 0.5);
+				wC[ijk] = hAC * phat + hBC * phbt + 0.040 * (drand48() - 0.5);
+				if (aismatrix == 0)
+					fprintf(fp, "%lf %lf %lf %lf %lf %lf\n", phat, phbt, phct, wA[ijk], wB[ijk], wC[ijk]);
+				else if (aismatrix == 1)
+					fprintf(fp, "%lf %lf %lf %lf %lf %lf\n", phct, phbt, phat, wC[ijk], wB[ijk], wA[ijk]);
+			}
+		}
+	}
+	fclose(fp);
+}
+
+void initW_csG(double *wA, double *wB, double *wC)
+{
+	int i, j, k, tag;
+	long ijk;
+	double xi, yj, zk, rA, rB, sincos;
+	double phat, phbt, phct;
+	FILE *fp;
+	fp = fopen("init_csG.dat", "w");
+
+	rA = fA / (fA + fB + fC) * 3.0 - 1.5;
+	rB = (fA + fB) / (fA + fB + fC) * 3.0 - 1.5;
+
+	for (i = 0; i < Nx; i++)
+	{
+		xi = (i - Nx / 2.0) / Nx * 2.0 * Pi;
+		for (j = 0; j < Ny; j++)
+		{
+			yj = (j - Ny / 2.0) / Ny * 2.0 * Pi;
+			for (k = 0; k < Nz; k++)
+			{
+				zk = (k - Nz / 2.0) / Nz * 2.0 * Pi;
+				tag = 0;
+
+				sincos = sin(xi) * cos(yj) + sin(yj) * cos(zk) + sin(zk) * cos(xi);
+
+				if (sincos < rB)
+				{
+					tag = 1;
+					if (sincos < rA)
+					{
+						tag = 2;
 					}
 				}
 				phat = 0.0;
