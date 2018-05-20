@@ -782,8 +782,8 @@ void initW_csG(double *wA, double *wB, double *wC)
 	FILE *fp;
 	fp = fopen("init_csG.dat", "w");
 
-	rA = fA / (fA + fB + fC) * 3.0 - 1.5;
-	rB = (fA + fB) / (fA + fB + fC) * 3.0 - 1.5;
+	rA = (fA / (fA + fB + fC) * 3.0 - 1.5) / 2;
+	rB = ((fA + fB) / (fA + fB + fC) * 3.0 - 1.5) / 2;
 
 	for (i = 0; i < Nx; i++)
 	{

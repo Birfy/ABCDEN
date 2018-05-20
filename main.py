@@ -52,7 +52,7 @@ def loadmatlab():
     import matlab.engine
     setText('LOADINGMATLAB\n')
     eng=matlab.engine.start_matlab()
-    btmatlab.grid(row=0,column=7,padx=5) #Button is added when finish loading matlab
+    btmatlab.grid(row=0,column=8,padx=5) #Button is added when finish loading matlab
     setText('MATLABLOADED\n')
 
 def generate(fA='',fB='',fC='',lx=0.0):
@@ -341,6 +341,57 @@ def getfile():
     t=threading.Thread(target=download)
     t.start()
 
+def mayavi():
+    '''
+    Using Mayavi to plot
+    '''
+    import numpy as np
+    from mayavi import mlab
+
+    setText('PLOTTING\n')
+
+    result=[]
+    for i in range(len(labels)):
+        result.append(entry[i].get().strip())
+
+    phafile=open('pha.dat','r')
+    pha=phafile.readlines()
+    a=[]
+    b=[]
+    c=[]
+    for item in pha:
+        if not item == '\n':
+            list=item.split(' ')
+            a.append(float(list[0]))
+            b.append(float(list[1]))
+            c.append(float(list[2]))
+    phafile.close()
+
+    n=1
+
+    a=np.array(a).reshape(int(result[18]),int(result[19]),int(result[20]))
+    b=np.array(b).reshape(int(result[18]),int(result[19]),int(result[20]))
+    c=np.array(c).reshape(int(result[18]),int(result[19]),int(result[20]))
+
+    amatrix=np.zeros((int(result[18])*n,int(result[19])*n,int(result[20])*n))
+    bmatrix=np.zeros((int(result[18])*n,int(result[19])*n,int(result[20])*n))
+    cmatrix=np.zeros((int(result[18])*n,int(result[19])*n,int(result[20])*n))
+    for i in range(int(result[18])*n):
+        for j in range(int(result[19])*n):
+            for k in range(int(result[20])*n):
+                amatrix[i][j][k]=a[i%int(result[18])][j%int(result[19])][k%int(result[20])]
+                bmatrix[i][j][k]=b[i%int(result[18])][j%int(result[19])][k%int(result[20])]
+                cmatrix[i][j][k]=c[i%int(result[18])][j%int(result[19])][k%int(result[20])]
+
+    src = mlab.pipeline.scalar_field(cmatrix)
+    mlab.pipeline.iso_surface(src, opacity=0.7,contours=[0.5],color=(1,0,0))
+
+    src = mlab.pipeline.scalar_field(bmatrix)
+    mlab.pipeline.iso_surface(src, opacity=0.7,contours=[0.5],color=(0,1,0),transparent=0.7)
+
+    src = mlab.pipeline.scalar_field(amatrix)
+    mlab.pipeline.iso_surface(src, opacity=0.7,contours=[0.5],color=(0,0,1))
+
 def matlab():
     '''
     Using matlab to plot
@@ -385,6 +436,7 @@ Button(buttonframe, text='multirun',command=openmultirun,width=10).grid(row=0,co
 Button(buttonframe, text='multilx',command=openmultilx,width=10).grid(row=0,column=4,padx=5)
 Button(buttonframe, text='top',command=top,width=10).grid(row=0,column=5,padx=5)
 Button(buttonframe, text='getpha',command=getfile,width=10).grid(row=0,column=6,padx=5)
+Button(buttonframe, text='mayavi',command=mayavi,width=10).grid(row=0,column=7,padx=5)
 btmatlab = Button(buttonframe, text='matlab',command=matlab,width=10)
 
 frame.pack()
