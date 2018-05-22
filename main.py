@@ -1,43 +1,16 @@
 '''
 ABCDEN SCFT GUI PROGRAM
 Package needed:
-    Matlab API for Python
-    numpy
+    Matlab: Matlab API for Python
+    Multirun: numpy
+    SSH: paramiko
+    Mayavi: mayavi, VTK
 '''
 
 from tkinter import *
 from numpy import arange
 import os
 import threading
-
-root = Tk()
-root.resizable(width=False, height=False)
-root.title("ABCDEN")
-
-labels = ['Initiation method','Anderson Mixing Option','Max Normal Mixing Steps','wopt','wcmp','maxErr','(ly/lx)^2','(lz/lx)^2','Matrix','hAB','hBC','hAC','fA','fB','fC','lx','ly','lz','Nx','Ny','Nz','Parameters Filename','Concentration Filename','ds0','epA','epB','epC','path']
-
-#Defining global variables to use in different functions
-defaults=[]
-result=[]
-eng=None 
-
-#Read paras from file
-para = open('para','r')
-for item in para.readlines():
-    for element in item.strip('\n').split(', '):
-        defaults.append(element)
-para.close()
-
-entry=[]
-frame = Frame(root)
-buttonframe = Frame(root)
-resultText = Text(root,height=20)
-
-for i in range(len(labels)):
-    entry.append(Entry(frame))
-    Label(frame, text=labels[i]).grid(row=i//3,column=(i%3)*2)
-    entry[i].insert(10,defaults[i])
-    entry[i].grid(row=i//3,column=(i%3)*2+1)
 
 def setText(text):
     resultText.insert(END,text)
@@ -429,22 +402,52 @@ def top():
     t=threading.Thread(target=gettop)
     t.start()
 
-Button(buttonframe, text='generate',command=generate,width=10).grid(row=0,column=0,padx=5)
-Button(buttonframe, text='update',command=update,width=10).grid(row=0,column=1,padx=5)
-Button(buttonframe, text='run',command=run,width=10).grid(row=0,column=2,padx=5)
-Button(buttonframe, text='multirun',command=openmultirun,width=10).grid(row=0,column=3,padx=5)
-Button(buttonframe, text='multilx',command=openmultilx,width=10).grid(row=0,column=4,padx=5)
-Button(buttonframe, text='top',command=top,width=10).grid(row=0,column=5,padx=5)
-Button(buttonframe, text='getpha',command=getfile,width=10).grid(row=0,column=6,padx=5)
-Button(buttonframe, text='mayavi',command=mayavi,width=10).grid(row=0,column=7,padx=5)
-btmatlab = Button(buttonframe, text='matlab',command=matlab,width=10)
+if __name__ == '__main__':
+    root = Tk()
+    root.resizable(width=False, height=False)
+    root.title("ABCDEN")
 
-frame.pack()
-buttonframe.pack()
-resultText.pack()
+    labels = ['Initiation method','Anderson Mixing Option','Max Normal Mixing Steps','wopt','wcmp','maxErr','(ly/lx)^2','(lz/lx)^2','Matrix','hAB','hBC','hAC','fA','fB','fC','lx','ly','lz','Nx','Ny','Nz','Parameters Filename','Concentration Filename','ds0','epA','epB','epC','path']
 
-t=threading.Thread(target=loadmatlab)
-t.start()
+    #Defining global variables to use in different functions
+    defaults=[]
+    result=[]
+    eng=None 
 
-root.mainloop()
-eng.quit()
+    #Read paras from file
+    para = open('para','r')
+    for item in para.readlines():
+        for element in item.strip('\n').split(', '):
+            defaults.append(element)
+    para.close()
+
+    entry=[]
+    frame = Frame(root)
+    buttonframe = Frame(root)
+    resultText = Text(root,height=20)
+
+    for i in range(len(labels)):
+        entry.append(Entry(frame))
+        Label(frame, text=labels[i]).grid(row=i//3,column=(i%3)*2)
+        entry[i].insert(10,defaults[i])
+        entry[i].grid(row=i//3,column=(i%3)*2+1)
+
+    Button(buttonframe, text='generate',command=generate,width=10).grid(row=0,column=0,padx=5)
+    Button(buttonframe, text='update',command=update,width=10).grid(row=0,column=1,padx=5)
+    Button(buttonframe, text='run',command=run,width=10).grid(row=0,column=2,padx=5)
+    Button(buttonframe, text='multirun',command=openmultirun,width=10).grid(row=0,column=3,padx=5)
+    Button(buttonframe, text='multilx',command=openmultilx,width=10).grid(row=0,column=4,padx=5)
+    Button(buttonframe, text='top',command=top,width=10).grid(row=0,column=5,padx=5)
+    Button(buttonframe, text='getpha',command=getfile,width=10).grid(row=0,column=6,padx=5)
+    Button(buttonframe, text='mayavi',command=mayavi,width=10).grid(row=0,column=7,padx=5)
+    btmatlab = Button(buttonframe, text='matlab',command=matlab,width=10)
+
+    frame.pack()
+    buttonframe.pack()
+    resultText.pack()
+
+    t=threading.Thread(target=loadmatlab)
+    t.start()
+
+    root.mainloop()
+    eng.quit()
