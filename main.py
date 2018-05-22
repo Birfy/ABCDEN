@@ -387,7 +387,7 @@ def mayavi():
     mlab.pipeline.iso_surface(src, opacity=0.7,contours=[0.5],color=(1,0,0))
 
     src = mlab.pipeline.scalar_field(bmatrix)
-    mlab.pipeline.iso_surface(src, opacity=0.7,contours=[0.5],color=(0,1,0),transparent=0.7)
+    mlab.pipeline.iso_surface(src, opacity=0.7,contours=[0.5],color=(0,1,0))
 
     src = mlab.pipeline.scalar_field(amatrix)
     mlab.pipeline.iso_surface(src, opacity=0.7,contours=[0.5],color=(0,0,1))
