@@ -1,1 +1,0 @@
-ssh cdy@10.158.131.62 "cat $path/printout.txt|tail -1|cut -c 1-14"

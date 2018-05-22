@@ -11,6 +11,7 @@ from tkinter import *
 from numpy import arange
 import os
 import threading
+import paramiko
 
 def setText(text):
     resultText.insert(END,text)
@@ -62,14 +63,22 @@ def generate(fA='',fB='',fC='',lx=0.0):
     para.close()
     setText("PARA GENERATED\n")
 
+def sshcommand(cmd):
+    stdin, stdout, stderr = ssh.exec_command(cmd)
+    message = stdout.read()
+    if not message:
+        message = stderr.read()
+    return message.decode()
+
 def update():
     '''
     Upload para file to ./update in Linux
     '''
     def updateonline():
         setText('UPDATING\n')
-        p = os.popen("bash update.bashrc")
-        setText(p.read())
+        sftp.put('./abcden.c', './update/abcden.c')
+        sshcommand("cd update; gcc abcden.c -o abcdenn -lm -lgsl -lgslcblas -lfftw3 -L/export/home/cdy/fftw3/lib;cd")
+        setText('COMPILED\n')
     
     t=threading.Thread(target=updateonline)
     t.start()
@@ -81,28 +90,25 @@ def run(path='',fA='',fB='',fC='',lx=0.0):
     Run the abcden file on path
     '''
     def runonline():
+        result=[]
+        for i in range(len(labels)):
+            result.append(entry[i].get().strip())
+
+        filepath=path
         setText('RUNNINGONLINE\n')
 
         generate(fA,fB,fC,lx)
 
-        runfile = open('run.bashrc','r',newline='\n')
-        lines = runfile.readlines()
-
-        runfile = open('run.bashrc','w',newline='\n')
-        for i in lines:
-            if not path:
-                runfile.write(i.replace('$path',result[len(result)-1]))
-            else:
-                runfile.write(i.replace('$path',path))
-        runfile.close()
-
-        p = os.popen("bash run.bashrc")
-        setText(p.read())
-
-        runfile = open('run.bashrc','w',newline='\n')
-        for i in lines:
-            runfile.write(i)
-        runfile.close()
+        if not filepath:
+            filepath = result[len(result) - 1]
+            filename='/'+result[0]+'a'+"%.3f" % float(result[12])+'b'+"%.3f" % float(result[13])+"x"+"%.3f" % float(result[15])
+        else:
+            filename='/'+filepath.split('/')[-2]+filepath.split('/')[-1]
+        
+        sshcommand("mkdir " + filepath)
+        sftp.put('./para', filepath+"/para")
+        sshcommand("cp ./update/abcden " + filepath + filename + ";rsh c0103 'cd " + filepath + ";nohup ."+filename+" >/dev/null 2>&1 &'")
+        setText("ABCDEN IS RUNNING\n")
 
     if path:
         runonline()
@@ -124,21 +130,9 @@ def downloadresult(pathlist):
         for i in pathlist:
             setText("DOWNLOADING\n")
 
-            runfile = open('getfree.bashrc','r',newline='\n')
-            lines = runfile.readlines()
+            message=sshcommand("cat "+i+"/printout.txt|tail -1|cut -c 1-14")
+            writefile.write(message)
 
-            runfile = open('getfree.bashrc','w',newline='\n')
-            for j in lines:
-                runfile.write(j.replace('$path',i))
-            runfile.close()
-
-            p = os.popen("bash getfree.bashrc")
-            writefile.write(p.read())
-
-            runfile = open('getfree.bashrc','w',newline='\n')
-            for j in lines:
-                runfile.write(j)
-            runfile.close()
         writefile.close()
         setText("FREEDOWNLOADED\n")
     t=threading.Thread(target=downloadresultonline)
@@ -296,20 +290,8 @@ def getfile():
         for i in range(len(labels)):
             result.append(entry[i].get().strip())
 
-        runfile = open('getpha.bashrc','r',newline='\n')
-        lines = runfile.readlines()
-
-        runfile = open('getpha.bashrc','w',newline='\n')
-        for i in lines:
-            runfile.write(i.replace('$path',result[len(result)-1]))
-        runfile.close()
-
-        p = os.popen("bash getpha.bashrc")
-        setText(p.read())
-        runfile = open('getpha.bashrc','w',newline='\n')
-        for i in lines:
-            runfile.write(i)
-        runfile.close()
+        sftp.get(result[len(result)-1]+"/pha.dat","./pha.dat")
+        setText("FILE DOWNLOADED\n")
 
     t=threading.Thread(target=download)
     t.start()
@@ -357,13 +339,13 @@ def mayavi():
                 cmatrix[i][j][k]=c[i%int(result[18])][j%int(result[19])][k%int(result[20])]
 
     src = mlab.pipeline.scalar_field(cmatrix)
-    mlab.pipeline.iso_surface(src, opacity=0.7,contours=[0.5],color=(1,0,0))
+    mlab.pipeline.iso_surface(src, opacity=1,contours=[0.5],color=(1,0,0))
 
     src = mlab.pipeline.scalar_field(bmatrix)
-    mlab.pipeline.iso_surface(src, opacity=0.7,contours=[0.5],color=(0,1,0))
+    mlab.pipeline.iso_surface(src, opacity=1,contours=[0.5],color=(0,1,0))
 
     src = mlab.pipeline.scalar_field(amatrix)
-    mlab.pipeline.iso_surface(src, opacity=0.7,contours=[0.5],color=(0,0,1))
+    mlab.pipeline.iso_surface(src, opacity=1,contours=[0.5],color=(0,0,1))
 
 def matlab():
     '''
@@ -397,12 +379,19 @@ def matlab():
 def top():
     def gettop():
         setText('TOPPING\n')
-        p=os.popen('bash top.bashrc')
-        setText(p.read())
+        message = sshcommand("rsh c0103 'ps -A w|grep 'a0\.[0-9]*b0\.[0-9]*x[0-9]\.[0-9]*''")
+        setText(message+'\n')
     t=threading.Thread(target=gettop)
     t.start()
 
+def entryCommand(command):
+    command=cmdEntry.get().strip()
+    cmdEntry.insert(0,'')
+    message=sshcommand("rsh c0103 '"+command+"'")
+    setText(message+'\n')
+
 if __name__ == '__main__':
+    #Initializing GUI
     root = Tk()
     root.resizable(width=False, height=False)
     root.title("ABCDEN")
@@ -412,7 +401,7 @@ if __name__ == '__main__':
     #Defining global variables to use in different functions
     defaults=[]
     result=[]
-    eng=None 
+    eng=None
 
     #Read paras from file
     para = open('para','r')
@@ -424,7 +413,9 @@ if __name__ == '__main__':
     entry=[]
     frame = Frame(root)
     buttonframe = Frame(root)
-    resultText = Text(root,height=20)
+    resultText = Text(root,height=20,width=80)
+    cmdEntry = Entry(root,width=80)
+    cmdEntry.bind('<Key-Return>', entryCommand)
 
     for i in range(len(labels)):
         entry.append(Entry(frame))
@@ -445,9 +436,27 @@ if __name__ == '__main__':
     frame.pack()
     buttonframe.pack()
     resultText.pack()
+    cmdEntry.pack()
 
+    #Load Matlab
     t=threading.Thread(target=loadmatlab)
     t.start()
 
+    #Load sftp
+    private_key = paramiko.RSAKey.from_private_key_file('C:/Users/Birfy/.ssh/id_rsa')
+    transport = paramiko.Transport(('10.158.131.62', 22))
+    transport.connect(username='cdy', pkey=private_key)
+    sftp = paramiko.SFTPClient.from_transport(transport)
+    setText('SFTP IS LOADED\n')
+
+    #Load ssh
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect(hostname='10.158.131.62',port=22,username='cdy')
+    setText('SSH IS LOADED\n')
+
     root.mainloop()
+    #Close the services
+    ssh.close()
+    transport.close()
     eng.quit()
