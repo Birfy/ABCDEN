@@ -386,7 +386,6 @@ def top():
 
 def entryCommand(command):
     command=cmdEntry.get().strip()
-    cmdEntry.insert(0,'')
     message=sshcommand("rsh c0103 '"+command+"'")
     setText(message+'\n')
 
