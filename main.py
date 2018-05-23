@@ -415,6 +415,7 @@ if __name__ == '__main__':
     resultText = Text(root,height=20,width=80)
     cmdEntry = Entry(root,width=80)
     cmdEntry.bind('<Key-Return>', entryCommand)
+    setText("WELCOME TO ABCDEN\n")
 
     for i in range(len(labels)):
         entry.append(Entry(frame))
@@ -453,8 +454,9 @@ if __name__ == '__main__':
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(hostname='10.158.131.62',port=22,username='cdy')
     setText('SSH IS LOADED\n')
-
+    
     root.mainloop()
+
     #Close the services
     ssh.close()
     transport.close()
