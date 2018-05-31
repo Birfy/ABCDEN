@@ -2,9 +2,9 @@ fid=fopen('pha.dat','r');
 a=fscanf(fid,'%f %f %f %f %f %f',[6,inf]);
 a=a';
 
-Nx=$Nx;
-Ny=$Ny;
-Nz=$Nz;
+Nx=64;
+Ny=128;
+Nz=48;
 
 pha1(1:Nx,1:Ny,1:Nz)=0.0;
 phb1(1:Nx,1:Ny,1:Nz)=0.0;
@@ -15,7 +15,7 @@ dx=0.3;
 dy=0.3;
 dz=0.3;
 
-n=1;
+n=3;
 
 [X,Y,Z]=meshgrid(dy:dy:Ny*dy*n,dx:dx:Nx*dx*n,dz:dz:Nz*dz*n);
 

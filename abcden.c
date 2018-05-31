@@ -1599,7 +1599,7 @@ double freeE(double *wA, double *wB, double *wC, double *phA, double *phB, doubl
 		printf(" %5d : %.8e, %.8e, %.8e\n", iter, freeEnergy, inCompMax, err);
 		freeDiff = fabs(freeEnergy - freeOld);
 
-		if (iter == 1 || iter % 1000 == 0)
+		if (iter == 1 || iter % 100 == 0)
 			write_ph(phA, phB, phC, wA, wB, wC);
 	} while (iter < maxIter && (inCompMax > Sm1 || freeDiff > Sm2));
 

@@ -385,15 +385,19 @@ def top():
     t.start()
 
 def entryCommand(command):
-    command=cmdEntry.get().strip()
-    message=sshcommand("rsh c0103 '"+command+"'")
-    setText(message+'\n')
+    def putcommand():
+        command=cmdEntry.get().strip()
+        message=sshcommand("rsh c0103 '"+command+"'")
+        setText(message+'\n')
+    t=threading.Thread(target=putcommand)
+    t.start()
 
 if __name__ == '__main__':
     #Initializing GUI
     root = Tk()
     root.resizable(width=False, height=False)
     root.title("ABCDEN")
+    root.iconbitmap('icon.ico')
 
     labels = ['Initiation method','Anderson Mixing Option','Max Normal Mixing Steps','wopt','wcmp','maxErr','(ly/lx)^2','(lz/lx)^2','Matrix','hAB','hBC','hAC','fA','fB','fC','lx','ly','lz','Nx','Ny','Nz','Parameters Filename','Concentration Filename','ds0','epA','epB','epC','path']
 
