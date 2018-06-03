@@ -2,9 +2,9 @@ fid=fopen('pha.dat','r');
 a=fscanf(fid,'%f %f %f %f %f %f',[6,inf]);
 a=a';
 
-Nx=64;
-Ny=128;
-Nz=48;
+Nx=$Nx;
+Ny=$Ny;
+Nz=$Nz;
 
 pha1(1:Nx,1:Ny,1:Nz)=0.0;
 phb1(1:Nx,1:Ny,1:Nz)=0.0;
