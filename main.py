@@ -9,6 +9,7 @@ Package needed:
 
 from tkinter import *
 from numpy import arange
+import numpy as np
 import os
 import threading
 import paramiko
@@ -26,7 +27,7 @@ def loadmatlab():
     import matlab.engine
     setText('LOADINGMATLAB\n')
     eng=matlab.engine.start_matlab()
-    btmatlab.grid(row=0,column=8,padx=5) #Button is added when finish loading matlab
+    btmatlab.grid(row=1,column=4,padx=5,pady=5) #Button is added when finish loading matlab
     setText('MATLABLOADED\n')
 
 def generate(fA='',fB='',fC='',lx=0.0):
@@ -300,7 +301,6 @@ def mayavi():
     '''
     Using Mayavi to plot
     '''
-    import numpy as np
     from mayavi import mlab
 
     setText('PLOTTING\n')
@@ -392,6 +392,51 @@ def entryCommand(command):
     t=threading.Thread(target=putcommand)
     t.start()
 
+def classify():
+    result=[]
+    for i in range(len(labels)):
+        result.append(entry[i].get().strip())
+
+    nx=int(result[18])
+    ny=int(result[19])
+    nz=int(result[20])
+
+    phafile = open('pha.dat', 'r')
+    phalines = phafile.readlines()
+    pha = [[], [], []]
+    sf = [[], [], []]
+    sfid = [[], [], []]
+    for item in phalines:
+        if not item == '\n':
+            list = item.split(' ')
+            pha[0].append(float(list[0]))
+            pha[1].append(float(list[1]))
+            pha[2].append(float(list[2]))
+    phafile.close()
+
+    pha = [np.array(item).reshape(nx, ny, nz) for item in pha]
+
+    sf[0] = [item[int(nx / 2),::,::] for item in pha]
+    sfid[0] = [np.zeros((ny, nz)) for item in pha]
+    sf[1] = [item[::,int(ny / 2),::] for item in pha]
+    sfid[1] = [np.zeros((nx, nz)) for item in pha]
+    sf[2] = [item[::,::,int(nz / 2)] for item in pha]
+    sfid[2] = [np.zeros((nx, ny)) for item in pha]
+
+    for x in range(len(sf)):
+        for y in range(len(sf[x])):
+            for i in range(len(sf[x][y])):
+                for j in range(len(sf[x][y][i])):
+                    if (sf[x][y][i][j]-sf[x][y][i][j-1]) >= 0 and (sf[x][y][i][(j+1)%len(sf[x][y][i])]-sf[x][y][i][j]) <= 0 and \
+                    (sf[x][y][i][j]-sf[x][y][i-1][j]) >= 0 and (sf[x][y][(i+1)%len(sf[x][y])][j]-sf[x][y][i][j]) <= 0:
+                        sfid[x][y][i][j] = 1
+
+    if sfid[0][0][0][0] == 1 and sfid[0][0][32][32] == 1:
+        setText('BCC\n')
+    elif sfid[0][0][32][0] == 1 and sfid[0][0][0][32] == 1:
+        setText('FCC\n')
+    
+
 if __name__ == '__main__':
     #Initializing GUI
     root = Tk()
@@ -416,8 +461,8 @@ if __name__ == '__main__':
     entry=[]
     frame = Frame(root)
     buttonframe = Frame(root)
-    resultText = Text(root,height=20,width=80)
-    cmdEntry = Entry(root,width=80)
+    resultText = Text(root,height=20,width=85)
+    cmdEntry = Entry(root,width=85)
     cmdEntry.bind('<Key-Return>', entryCommand)
     setText("WELCOME TO ABCDEN\n")
 
@@ -427,16 +472,17 @@ if __name__ == '__main__':
         entry[i].insert(10,defaults[i])
         entry[i].grid(row=i//3,column=(i%3)*2+1)
 
-    Button(buttonframe, text='generate',command=generate,width=10).grid(row=0,column=0,padx=5)
-    Button(buttonframe, text='update',command=update,width=10).grid(row=0,column=1,padx=5)
-    Button(buttonframe, text='run',command=run,width=10).grid(row=0,column=2,padx=5)
-    Button(buttonframe, text='multirun',command=openmultirun,width=10).grid(row=0,column=3,padx=5)
-    Button(buttonframe, text='multilx',command=openmultilx,width=10).grid(row=0,column=4,padx=5)
-    Button(buttonframe, text='top',command=top,width=10).grid(row=0,column=5,padx=5)
-    Button(buttonframe, text='getpha',command=getfile,width=10).grid(row=0,column=6,padx=5)
-    Button(buttonframe, text='mayavi',command=mayavi,width=10).grid(row=0,column=7,padx=5)
-    btmatlab = Button(buttonframe, text='matlab',command=matlab,width=10)
-
+    Button(buttonframe, text='generate',command=generate,width=15).grid(row=0,column=0,padx=5,pady=5)
+    Button(buttonframe, text='update',command=update,width=15).grid(row=0,column=1,padx=5,pady=5)
+    Button(buttonframe, text='run',command=run,width=15).grid(row=0,column=2,padx=5,pady=5)
+    Button(buttonframe, text='multirun',command=openmultirun,width=15).grid(row=0,column=3,padx=5,pady=5)
+    Button(buttonframe, text='multilx',command=openmultilx,width=15).grid(row=0,column=4,padx=5,pady=5)
+    Button(buttonframe, text='top',command=top,width=15).grid(row=1,column=0,padx=5,pady=5)
+    Button(buttonframe, text='getpha',command=getfile,width=15).grid(row=1,column=1,padx=5,pady=5)
+    Button(buttonframe, text='classify',command=classify,width=15).grid(row=1,column=2,padx=5,pady=5)
+    Button(buttonframe, text='mayavi',command=mayavi,width=15).grid(row=1,column=3,padx=5,pady=5)
+    btmatlab = Button(buttonframe, text='matlab',command=matlab,width=15)
+    
     frame.pack()
     buttonframe.pack()
     resultText.pack()
