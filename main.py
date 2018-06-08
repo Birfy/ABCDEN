@@ -78,7 +78,7 @@ def update():
     def updateonline():
         setText('UPDATING\n')
         sftp.put('./abcden.c', './update/abcden.c')
-        sshcommand("cd update; gcc abcden.c -o abcdenn -lm -lgsl -lgslcblas -lfftw3 -L/export/home/cdy/fftw3/lib;cd")
+        sshcommand("cd update; gcc abcden.c -o abcden -lm -lgsl -lgslcblas -lfftw3 -L/export/home/cdy/fftw3/lib;cd")
         setText('COMPILED\n')
     
     t=threading.Thread(target=updateonline)
@@ -108,7 +108,7 @@ def run(path='',fA='',fB='',fC='',lx=0.0):
         
         sshcommand("mkdir " + filepath)
         sftp.put('./para', filepath+"/para")
-        sshcommand("cp ./update/abcden " + filepath + filename + ";rsh c0103 'cd " + filepath + ";nohup ."+filename+" >/dev/null 2>&1 &'")
+        sshcommand("cp ./update/abcden " + filepath + filename + ";rsh c0102 'cd " + filepath + ";nohup ."+filename+" >/dev/null 2>&1 &'")
         setText("ABCDEN IS RUNNING\n")
 
     if path:
@@ -379,7 +379,7 @@ def matlab():
 def top():
     def gettop():
         setText('TOPPING\n')
-        message = sshcommand("rsh c0103 'ps -A w|grep 'a0\.[0-9]*b0\.[0-9]*x[0-9]\.[0-9]*''")
+        message = sshcommand("rsh c0102 'ps -A w|grep 'a0\.[0-9]*b0\.[0-9]*x[0-9]\.[0-9]*''")
         setText(message+'\n')
     t=threading.Thread(target=gettop)
     t.start()
@@ -387,7 +387,7 @@ def top():
 def entryCommand(command):
     def putcommand():
         command=cmdEntry.get().strip()
-        message=sshcommand("rsh c0103 '"+command+"'")
+        message=sshcommand("rsh c0102 '"+command+"'")
         setText(message+'\n')
     t=threading.Thread(target=putcommand)
     t.start()
@@ -401,11 +401,11 @@ def classify():
     ny=int(result[19])
     nz=int(result[20])
 
+    #Read pha file
     phafile = open('pha.dat', 'r')
     phalines = phafile.readlines()
     pha = [[], [], []]
     sf = [[], [], []]
-    sfid = [[], [], []]
     for item in phalines:
         if not item == '\n':
             list = item.split(' ')
@@ -416,34 +416,45 @@ def classify():
 
     pha = [np.array(item).reshape(nx, ny, nz) for item in pha]
 
-    sf[0] = [item[int(nx / 2),::,::] for item in pha]
-    sfid[0] = [np.zeros((ny, nz)) for item in pha]
-    sf[1] = [item[::,int(ny / 2),::] for item in pha]
-    sfid[1] = [np.zeros((nx, nz)) for item in pha]
-    sf[2] = [item[::,::,int(nz / 2)] for item in pha]
-    sfid[2] = [np.zeros((nx, ny)) for item in pha]
+    #The size of Fourier Space divided by size of pha
+    d=1
 
-    for x in range(len(sf)):
-        for y in range(len(sf[x])):
-            for i in range(len(sf[x][y])):
-                for j in range(len(sf[x][y][i])):
-                    if (sf[x][y][i][j]-sf[x][y][i][j-1]) >= 0 and (sf[x][y][i][(j+1)%len(sf[x][y][i])]-sf[x][y][i][j]) <= 0 and \
-                    (sf[x][y][i][j]-sf[x][y][i-1][j]) >= 0 and (sf[x][y][(i+1)%len(sf[x][y])][j]-sf[x][y][i][j]) <= 0:
-                        sfid[x][y][i][j] = 1
+    #DFT
+    sf[0] = [np.fft.fft2(item[int(nx/2),::,::],[64*d,64*d]).real[0:int(4*d),0:int(4*d)] for item in pha]
+    sf[1] = [np.fft.fft2(item[::,int(ny/2),::],[64*d,64*d]).real[0:int(4*d),0:int(4*d)] for item in pha]
+    sf[2] = [np.fft.fft2(item[::,::,int(nz/2)],[64*d,64*d]).real[0:int(4*d),0:int(4*d)] for item in pha]
+    #Coordinate of sf: three slices, three components, 2D Fourier Square
 
-    if sfid[0][0][0][0] == 1 and sfid[0][0][32][32] == 1:
+    #Eliminate the main peak at (0,0)
+    for item in sf:
+        for subitem in item:
+            subitem[0][0]=0
+
+    #Judging
+    if abs(sf[0][0][0][1] - np.min(sf[0][0])) < 0.1 and abs(sf[0][0][1][0] - np.min(sf[0][0])) < 0.1 and abs(sf[0][0][1][1] - np.max(sf[0][0])) < 0.1:
         setText('BCC\n')
-    elif sfid[0][0][32][0] == 1 and sfid[0][0][0][32] == 1:
+    elif abs(sf[0][0][0][2] - np.max(sf[0][0])) < 0.1 and abs(sf[0][0][2][0] - np.max(sf[0][0])) < 0.1 and abs(sf[0][0][1][1] - np.min(sf[0][0])) < 0.1:
         setText('FCC\n')
+    elif abs(sf[0][0][1][1] - np.min(sf[0][0])) < 0.1 and abs(sf[1][0][0][1] - np.max(sf[1][0])) < 0.1 and abs(sf[2][0][0][1] - np.max(sf[2][0])) < 0.1:
+        setText('G\n')
+    elif abs(sf[0][0][2][0] - np.max(sf[0][0])) < 0.1 and abs(sf[0][0][1][2] - np.min(sf[0][0])) < 0.1 and abs(sf[1][0][0][2] - np.max(sf[1][0])) < 0.1:
+        setText('A15\n')
+    elif abs(sf[0][0][0][1] - np.min(sf[0][0])) < 0.1 and abs(sf[0][0][1][1] - np.max(sf[0][0])) < 0.1 and abs(sf[1][0][2][0] - np.min(sf[1][0])) < 0.1:
+        setText('csHelix\n')
+    elif abs(sf[0][0][1][0] - np.max(sf[0][0])) < 0.1 and abs(sf[0][0][2][1] - np.min(sf[0][0])) < 0.1 and abs(sf[1][0][2][1] - np.min(sf[1][0])) < 0.1:
+        setText('csHelix2\n')
+    elif abs(sf[0][0][0][2] - np.max(sf[0][0])) < 0.1 and abs(sf[0][0][2][1] - np.min(sf[0][0])) < 0.1 and abs(sf[1][0][0][2] - np.max(sf[1][0])) < 0.1:
+        setText('csσ\n')
     
 
 if __name__ == '__main__':
+    
     #Initializing GUI
     root = Tk()
     root.resizable(width=False, height=False)
     root.title("ABCDEN")
     root.iconbitmap('icon.ico')
-
+    
     labels = ['Initiation method','Anderson Mixing Option','Max Normal Mixing Steps','wopt','wcmp','maxErr','(ly/lx)^2','(lz/lx)^2','Matrix','hAB','hBC','hAC','fA','fB','fC','lx','ly','lz','Nx','Ny','Nz','Parameters Filename','Concentration Filename','ds0','epA','epB','epC','path']
 
     #Defining global variables to use in different functions

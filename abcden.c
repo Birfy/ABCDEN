@@ -36,6 +36,7 @@ void initW_csC(double *wA, double *wB, double *wC);
 void initW_csHelix(double *wA, double *wB, double *wC);
 void initW_csHelix2(double *wA, double *wB, double *wC);
 void initW_csG(double *wA, double *wB, double *wC);
+void initW_csSigma(double *wA, double *wB, double *wC);
 void initW_LAM2(double *wA, double *wB, double *wC);
 void initW_RC(double *wA, double *wB, double *wC);
 void initW_H1C(double *wA, double *wB, double *wC);
@@ -223,6 +224,8 @@ void init(int in, double *wA, double *wB, double *wC)
 		initW_csHelix2(wA, wB, wC);
 	else if (in == 7)
 		initW_csG(wA, wB, wC);
+	else if (in == 6)
+		initW_csSigma(wA, wB, wC);
 	else if (in == 1)
 	{
 		fp = fopen("in.d", "r");
@@ -423,6 +426,219 @@ void initW_csA15(double *wA, double *wB, double *wC)
 					zij = zk - zc[nc];
 
 					rij = xij * xij * 4 + yij * yij * 2 + zij * zij * 4;
+					rij = sqrt(rij);
+					if (rij < rb)
+					{
+						tag = 1;
+						if (rij < ra)
+						{
+							tag = 2;
+						}
+					}
+				}
+				phat = 0.0;
+				phbt = 0.0;
+				phct = 1.0;
+
+				if (tag == 1)
+				{
+					phat = 0.0;
+					phbt = 1.0;
+					phct = 0.0;
+				}
+				else if (tag == 2)
+				{
+					phat = 1.0;
+					phbt = 0.0;
+					phct = 0.0;
+				}
+				ijk = (long)((i * Ny + j) * Nz + k);
+				wA[ijk] = hAB * phbt + hAC * phct + 0.040 * (drand48() - 0.5);
+				wB[ijk] = hAB * phat + hBC * phct + 0.040 * (drand48() - 0.5);
+				wC[ijk] = hAC * phat + hBC * phbt + 0.040 * (drand48() - 0.5);
+				if (aismatrix == 0)
+					fprintf(fp, "%lf %lf %lf %lf %lf %lf\n", phat, phbt, phct, wA[ijk], wB[ijk], wC[ijk]);
+				else if (aismatrix == 1)
+					fprintf(fp, "%lf %lf %lf %lf %lf %lf\n", phct, phbt, phat, wC[ijk], wB[ijk], wA[ijk]);
+			}
+		}
+	}
+	fclose(fp);
+}
+
+void initW_csSigma(double *wA, double *wB, double *wC)
+{
+	int i, j, k, nc, tag;
+	long ijk;
+	double xij, yij, zij;
+	double xc[47], yc[47], zc[47];
+	double xi, yj, zk, rij, rb, ra;
+	double phat, phbt, phct;
+	FILE *fp;
+	fp = fopen("init_csSigma.dat", "w");
+
+	ra = pow((fAinit / (fA + fB + fC) * lx * ly * lz / (64 * 4.0 * Pi / 3.0)), 1.0 / 3);
+	rb = pow(((fAinit + fBinit) / (fA + fB + fC) * lx * ly * lz / (64 * 4.0 * Pi / 3.0)), 1.0 / 3);
+
+	xc[0] = 0.0 * lx;
+	yc[0] = 0.0 * ly;
+	zc[0] = 0.0 * lz;
+	xc[30] = 1.0 * lx;
+	yc[30] = 0.0 * ly;
+	zc[30] = 0.0 * lz;
+	xc[31] = 0.0 * lx;
+	yc[31] = 1.0 * ly;
+	zc[31] = 0.0 * lz;
+	xc[32] = 1.0 * lx;
+	yc[32] = 1.0 * ly;
+	zc[32] = 0.0 * lz;
+	xc[33] = 0.0 * lx;
+	yc[33] = 0.0 * ly;
+	zc[33] = 1.0 * lz;
+	xc[34] = 1.0 * lx;
+	yc[34] = 0.0 * ly;
+	zc[34] = 1.0 * lz;
+	xc[35] = 0.0 * lx;
+	yc[35] = 1.0 * ly;
+	zc[35] = 1.0 * lz;
+	xc[36] = 1.0 * lx;
+	yc[36] = 1.0 * ly;
+	zc[36] = 1.0 * lz;
+	xc[1] = 0.5 * lx;
+	yc[1] = 0.5 * ly;
+	zc[1] = 0.5 * lz;
+	xc[2] = 0.31726 * lx;
+	yc[2] = 0.68274 * ly;
+	zc[2] = 0.24834 * lz;
+	xc[3] = 0.68274 * lx;
+	yc[3] = 0.31726 * ly;
+	zc[3] = 0.24834 * lz;
+	xc[4] = 0.18274 * lx;
+	yc[4] = 0.18274 * ly;
+	zc[4] = 0.25166 * lz;
+	xc[5] = 0.81726 * lx;
+	yc[5] = 0.81726 * ly;
+	zc[5] = 0.25166 * lz;
+	xc[6] = 0.18274 * lx;
+	yc[6] = 0.18274 * ly;
+	zc[6] = 0.74834 * lz;
+	xc[7] = 0.81726 * lx;
+	yc[7] = 0.81726 * ly;
+	zc[7] = 0.74834 * lz;
+	xc[8] = 0.31726 * lx;
+	yc[8] = 0.68274 * ly;
+	zc[8] = 0.75166 * lz;
+	xc[9] = 0.68274 * lx;
+	yc[9] = 0.31726 * ly;
+	zc[9] = 0.75166 * lz;
+	xc[10] = 0.39875 * lx;
+	yc[10] = 0.39875 * ly;
+	zc[10] = 0.0 * lz;
+	xc[37] = 0.39875 * lx;
+	yc[37] = 0.39875 * ly;
+	zc[37] = 1.0 * lz;
+	xc[11] = 0.60125 * lx;
+	yc[11] = 0.60125 * ly;
+	zc[11] = 0.0 * lz;
+	xc[38] = 0.60125 * lx;
+	yc[38] = 0.60125 * ly;
+	zc[38] = 1.0 * lz;
+	xc[12] = 0.89875 * lx;
+	yc[12] = 0.10125 * ly;
+	zc[12] = 0.5 * lz;
+	xc[13] = 0.10125 * lx;
+	yc[13] = 0.89875 * ly;
+	zc[13] = 0.5 * lz;
+	xc[14] = 0.73921 * lx;
+	yc[14] = 0.06608 * ly;
+	zc[14] = 0.0 * lz;
+	xc[15] = 0.93392 * lx;
+	yc[15] = 0.26079 * ly;
+	zc[15] = 0.0 * lz;
+	xc[16] = 0.06608 * lx;
+	yc[16] = 0.73921 * ly;
+	zc[16] = 0.0 * lz;
+	xc[17] = 0.26079 * lx;
+	yc[17] = 0.93392 * ly;
+	zc[17] = 0.0 * lz;
+	xc[39] = 0.73921 * lx;
+	yc[39] = 0.06608 * ly;
+	zc[39] = 1.0 * lz;
+	xc[40] = 0.93392 * lx;
+	yc[40] = 0.26079 * ly;
+	zc[40] = 1.0 * lz;
+	xc[41] = 0.06608 * lx;
+	yc[41] = 0.73921 * ly;
+	zc[41] = 1.0 * lz;
+	xc[42] = 0.26079 * lx;
+	yc[42] = 0.93392 * ly;
+	zc[42] = 1.0 * lz;
+	xc[18] = 0.43392 * lx;
+	yc[18] = 0.23921 * ly;
+	zc[18] = 0.5 * lz;
+	xc[19] = 0.23921 * lx;
+	yc[19] = 0.43392 * ly;
+	zc[19] = 0.5 * lz;
+	xc[20] = 0.76079 * lx;
+	yc[20] = 0.56608 * ly;
+	zc[20] = 0.5 * lz;
+	xc[21] = 0.56608 * lx;
+	yc[21] = 0.76079 * ly;
+	zc[21] = 0.5 * lz;
+	xc[22] = 0.13131 * lx;
+	yc[22] = 0.46351 * ly;
+	zc[22] = 0.0 * lz;
+	xc[23] = 0.46351 * lx;
+	yc[23] = 0.13131 * ly;
+	zc[23] = 0.0 * lz;
+	xc[24] = 0.53649 * lx;
+	yc[24] = 0.86869 * ly;
+	zc[24] = 0.0 * lz;
+	xc[25] = 0.86869 * lx;
+	yc[25] = 0.53649 * ly;
+	zc[25] = 0.0 * lz;
+	xc[43] = 0.13131 * lx;
+	yc[43] = 0.46351 * ly;
+	zc[43] = 1.0 * lz;
+	xc[44] = 0.46351 * lx;
+	yc[44] = 0.13131 * ly;
+	zc[44] = 1.0 * lz;
+	xc[45] = 0.53649 * lx;
+	yc[45] = 0.86869 * ly;
+	zc[45] = 1.0 * lz;
+	xc[46] = 0.86869 * lx;
+	yc[46] = 0.53649 * ly;
+	zc[46] = 1.0 * lz;
+	xc[26] = 0.03649 * lx;
+	yc[26] = 0.63131 * ly;
+	zc[26] = 0.5 * lz;
+	xc[27] = 0.36869 * lx;
+	yc[27] = 0.96351 * ly;
+	zc[27] = 0.5 * lz;
+	xc[28] = 0.63131 * lx;
+	yc[28] = 0.03649 * ly;
+	zc[28] = 0.5 * lz;
+	xc[29] = 0.96351 * lx;
+	yc[29] = 0.36869 * ly;
+	zc[29] = 0.5 * lz;
+
+	for (i = 0; i < Nx; i++)
+	{
+		xi = i * dx;
+		for (j = 0; j < Ny; j++)
+		{
+			yj = j * dy;
+			for (k = 0; k < Nz; k++)
+			{
+				zk = k * dz;
+				tag = 0;
+				for (nc = 0; nc < 47; nc++)
+				{
+					xij = xi - xc[nc];
+					yij = yj - yc[nc];
+					zij = zk - zc[nc];
+
+					rij = xij * xij + yij * yij + zij * zij;
 					rij = sqrt(rij);
 					if (rij < rb)
 					{
