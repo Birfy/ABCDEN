@@ -5,8 +5,8 @@ def setText(text):
     print(text)
 
 #Defining size of pha
-nx = 128
-ny = 128
+nx = 64
+ny = 64
 nz = 64
 
 #Read pha file
@@ -28,9 +28,9 @@ pha = [np.array(item).reshape(nx, ny, nz) for item in pha]
 d=1
 
 #DFT
-sf[0] = [np.fft.fft2(item[int(nx/2),::,::],[64*d,64*d]).real[0:int(4*d),0:int(4*d)] for item in pha]
-sf[1] = [np.fft.fft2(item[::,int(ny/2),::],[64*d,64*d]).real[0:int(4*d),0:int(4*d)] for item in pha]
-sf[2] = [np.fft.fft2(item[::,::,int(nz/2)],[64*d,64*d]).real[0:int(4*d),0:int(4*d)] for item in pha]
+sf[0] = [abs(np.fft.fft2(item[int(nx/4),::,::],[64*d,64*d]))[0:int(4*d),0:int(4*d)] for item in pha]
+sf[1] = [abs(np.fft.fft2(item[::,int(ny/4),::],[64*d,64*d]))[0:int(4*d),0:int(4*d)] for item in pha]
+sf[2] = [abs(np.fft.fft2(item[::,::,int(nz/4)],[64*d,64*d]))[0:int(4*d),0:int(4*d)] for item in pha]
 #Coordinate of sf: three slices, three components, 2D Fourier Square
 
 #Eliminate the main peak at (0,0)
@@ -39,7 +39,7 @@ for item in sf:
         subitem[0][0]=0
 
 #Judging
-if abs(sf[0][0][0][1] - np.min(sf[0][0])) < 0.1 and abs(sf[0][0][1][0] - np.min(sf[0][0])) < 0.1 and abs(sf[0][0][1][1] - np.max(sf[0][0])) < 0.1:
+if abs(sf[0][0][0][1] - np.max(sf[0][0])) < 0.1 and abs(sf[0][0][1][0] - np.max(sf[0][0])) < 0.1 and abs(sf[1][0][0][1] - np.max(sf[1][0])) < 0.1:
     setText('BCC\n')
 elif abs(sf[0][0][0][2] - np.max(sf[0][0])) < 0.1 and abs(sf[0][0][2][0] - np.max(sf[0][0])) < 0.1 and abs(sf[0][0][1][1] - np.min(sf[0][0])) < 0.1:
     setText('FCC\n')
