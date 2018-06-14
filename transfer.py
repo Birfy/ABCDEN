@@ -1,3 +1,8 @@
+'''
+This program transfer AB diblock concentrations to ABC Triblock concentrations for specific initiation
+By adding a 0 concentration to B component
+'''
+
 fileread=open('pha.dat','r')
 filewrite=open('fddd.dat','w')
 

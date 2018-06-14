@@ -2,9 +2,9 @@ fid=fopen('pha.dat','r');
 a=fscanf(fid,'%f %f %f %f %f %f',[6,inf]);
 a=a';
 
-Nx=$Nx;
-Ny=$Ny;
-Nz=$Nz;
+% Nx=$Nx;
+% Ny=$Ny;
+% Nz=$Nz;
 
 pha1(1:Nx,1:Ny,1:Nz)=0.0;
 phb1(1:Nx,1:Ny,1:Nz)=0.0;
@@ -70,8 +70,8 @@ patch(isocaps(X,Y,Z,phb,0.5),'facealpha',0.5,...
 isonormals(X,Y,Z,phb,pb)
 set(pb,'FaceColor','green','EdgeColor','none') %transparency
 
-pc = patch(isosurface(X,Y,Z,phc,1));
-patch(isocaps(X,Y,Z,phc,1),'facealpha',0.5,...
+pc = patch(isosurface(X,Y,Z,phc,0.5));
+patch(isocaps(X,Y,Z,phc,0.5),'facealpha',0.5,...
     'FaceColor','red',...
     'EdgeColor','none',...
     'AmbientStrength',.2,...

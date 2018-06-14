@@ -15,6 +15,9 @@ import threading
 import paramiko
 
 def setText(text):
+    '''
+    Add text to the TextView
+    '''
     resultText.insert(END,text)
     resultText.see(END)
 
@@ -25,10 +28,10 @@ def loadmatlab():
     '''
     global eng
     import matlab.engine
-    setText('LOADINGMATLAB\n')
+    # setText('LOADINGMATLAB\n')
     eng=matlab.engine.start_matlab()
-    btmatlab.grid(row=1,column=4,padx=5,pady=5) #Button is added when finish loading matlab
-    setText('MATLABLOADED\n')
+    btmatlab.grid(row=1,column=5,padx=5,pady=5) #Button is added when finish loading matlab
+    setText('MATLAB IS LOADED\n')
 
 def generate(fA='',fB='',fC='',lx=0.0):
     '''
@@ -65,11 +68,79 @@ def generate(fA='',fB='',fC='',lx=0.0):
     setText("PARA GENERATED\n")
 
 def sshcommand(cmd):
+    '''
+    Proceed a ssh command and get result
+    '''
     stdin, stdout, stderr = ssh.exec_command(cmd)
     message = stdout.read()
     if not message:
         message = stderr.read()
     return message.decode()
+
+def printout():
+    '''
+    Get the printout result from path
+    '''
+    def getprintout():
+        setText('GETTING PRINTOUT\n')
+        result=[]
+        pathlist=[]
+        for i in range(len(labels)):
+            result.append(entry[i].get().strip())
+        message = sshcommand("rsh c0103 ' cat "+result[-1]+"/printout.txt '")
+        setText(message+'\n')
+    t=threading.Thread(target=getprintout)
+    t.start()
+
+def autoremove():
+    '''
+    Kill the selected progress
+    Remove the selected direction
+    '''
+    def selectremove():
+        id = [item.split(' ')[0] for item in sshcommand("rsh " + nodeVar.get() + " 'ps -A w|grep 'a0\.[0-9]*b0\.[0-9]*x[0-9]\.[0-9]*''").strip('\n').split('\n')]
+        name = [item.split(' ')[-1] for item in sshcommand("rsh " + nodeVar.get() + " 'ps -A w|grep 'a0\.[0-9]*b0\.[0-9]*x[0-9]\.[0-9]*''").strip('\n').split('\n')]
+        remove=Tk()
+        remove.title("Autoremove")
+        remove.resizable(width=False, height=False)
+        var=[]
+
+        if name:
+            for j,i in enumerate(name):
+                var.append(IntVar(remove))
+                Checkbutton(remove, text=i, variable=var[j]).grid(row=j//2,column=j%2)
+
+        def autoremove_kill():
+            for j,i in enumerate(var):
+                if i.get():
+                    sshcommand("rsh " + nodeVar.get() + " 'kill "+id[j]+"'")
+                    setText(id[j]+' KILLED\n')
+
+        def autoremove_remove():
+            name_init=[]
+            name_name=[]
+        
+            for i in name:
+                name_init.append(i.split('a')[0].strip('./'))
+                name_name.append('a'+i.split('a')[-1])
+                
+            result=[]
+            for i in range(len(labels)):
+                result.append(entry[i].get().strip())
+            
+            for j,i in enumerate(var):
+                if i.get():
+                    sshcommand("rsh " + nodeVar.get() + " 'rm -rf "+result[-1]+'/'+name_init[j]+'/'+name_name[j]+"'")
+                    setText(result[-1]+'/'+name_init[j]+'/'+name_name[j]+' REMOVED\n')
+
+        Button(remove, text='Kill', command=autoremove_kill, width=20).grid(row=j, column=0 , pady=4)
+        Button(remove, text='Remove', command=autoremove_remove, width=20).grid(row=j, column=1, pady=4)
+
+        remove.mainloop()
+    t=threading.Thread(target=selectremove)
+    t.start()
+
+
 
 def update():
     '''
@@ -108,7 +179,7 @@ def run(path='',fA='',fB='',fC='',lx=0.0):
         
         sshcommand("mkdir " + filepath)
         sftp.put('./para', filepath+"/para")
-        sshcommand("cp ./update/abcden " + filepath + filename + ";rsh c0102 'cd " + filepath + ";nohup ."+filename+" >/dev/null 2>&1 &'")
+        sshcommand("cp ./update/abcden " + filepath + filename + ";rsh " + nodeVar.get() + " 'cd " + filepath + ";nohup ."+filename+" >/dev/null 2>&1 &'")
         setText("ABCDEN IS RUNNING\n")
 
     if path:
@@ -353,46 +424,77 @@ def matlab():
     '''
     def plot():
         setText('PLOTTING\n')
-
         result=[]
         for i in range(len(labels)):
             result.append(entry[i].get().strip())
 
-        runfile = open('plotphabc.m','r',newline='\n')
-        lines = runfile.readlines()
+        eng.workspace['Nx']=float(result[18])
+        eng.workspace['Ny']=float(result[19])
+        eng.workspace['Nz']=float(result[20])
 
-        runfile = open('plotphabc.m','w',newline='\n')
-        for i in lines:
-            runfile.write(i.replace('$Nx',result[18]).replace('$Ny',result[19]).replace('$Nz',result[20]))
-        runfile.close()
-
-        eng.plotphabc(nargout=0)
-
-        runfile = open('plotphabc.m','w',newline='\n')
-        for i in lines:
-            runfile.write(i)
-        runfile.close()        
+        eng.plotphabc(nargout=0)   
     
     t=threading.Thread(target=plot)
     t.start()
 
 def top():
+    '''
+    Get the running abden typed file 
+    '''
     def gettop():
         setText('TOPPING\n')
-        message = sshcommand("rsh c0102 'ps -A w|grep 'a0\.[0-9]*b0\.[0-9]*x[0-9]\.[0-9]*''")
+        message = sshcommand("rsh " + nodeVar.get() + " 'ps -A w|grep 'a0\.[0-9]*b0\.[0-9]*x[0-9]\.[0-9]*''")
         setText(message+'\n')
     t=threading.Thread(target=gettop)
     t.start()
 
 def entryCommand(command):
+    '''
+    Command
+    '''
     def putcommand():
         command=cmdEntry.get().strip()
-        message=sshcommand("rsh c0102 '"+command+"'")
+        message=sshcommand("rsh " + nodeVar.get() + " '"+command+"'")
         setText(message+'\n')
     t=threading.Thread(target=putcommand)
     t.start()
 
 def classify():
+    '''
+    Identify
+    '''
+    def geteig(filename,nx=64,ny=64,nz=64):
+        '''
+        Get a array with three fft arrays of each component
+        '''
+        # Read pha file
+        phafile = open(filename, 'r')
+        phalines = phafile.readlines()
+        pha = [[], [], []]
+        sf = []
+        for item in phalines:
+            if not item == '\n':
+                list = item.split(' ')
+                pha[0].append(float(list[0]))
+                pha[1].append(float(list[1]))
+                pha[2].append(float(list[2]))
+        phafile.close()
+
+        # Convert the pha to a nx*ny*nz matrix
+        pha = [np.array(item).reshape(nx, ny, nz) for item in pha]
+
+        # The size of Fourier Space divided by size of pha
+        d=2
+
+        # FFT the concentration to a 64*64*64 matrix
+        sf = abs(np.fft.fftn(pha[0],[64*d,64*d,64*d]))[0:int(4*d),0:int(4*d),0:int(4*d)]
+        
+        sf /= sf[0][0][0]
+        return sf
+
+    from sklearn.externals import joblib
+    import numpy as np
+
     result=[]
     for i in range(len(labels)):
         result.append(entry[i].get().strip())
@@ -401,54 +503,29 @@ def classify():
     ny=int(result[19])
     nz=int(result[20])
 
-    #Read pha file
-    phafile = open('pha.dat', 'r')
-    phalines = phafile.readlines()
-    pha = [[], [], []]
-    sf = [[], [], []]
-    for item in phalines:
-        if not item == '\n':
-            list = item.split(' ')
-            pha[0].append(float(list[0]))
-            pha[1].append(float(list[1]))
-            pha[2].append(float(list[2]))
-    phafile.close()
+    # Load the saved learning result
+    with open('classifier.pkl','rb') as file:
+        classifier=joblib.load(file)
 
-    pha = [np.array(item).reshape(nx, ny, nz) for item in pha]
+    with open('estimator.pkl','rb') as file:
+        estimator=joblib.load(file)
 
-    #The size of Fourier Space divided by size of pha
-    d=1
+    # Load a file and convert to fft matrix
+    matrix = np.array(geteig('./pha.dat',nx,ny,nz)).reshape((1,-1))
 
-    #DFT
-    sf[0] = [np.fft.fft2(item[int(nx/2),::,::],[64*d,64*d]).real[0:int(4*d),0:int(4*d)] for item in pha]
-    sf[1] = [np.fft.fft2(item[::,int(ny/2),::],[64*d,64*d]).real[0:int(4*d),0:int(4*d)] for item in pha]
-    sf[2] = [np.fft.fft2(item[::,::,int(nz/2)],[64*d,64*d]).real[0:int(4*d),0:int(4*d)] for item in pha]
-    #Coordinate of sf: three slices, three components, 2D Fourier Square
-
-    #Eliminate the main peak at (0,0)
-    for item in sf:
-        for subitem in item:
-            subitem[0][0]=0
-
-    #Judging
-    if abs(sf[0][0][0][1] - np.min(sf[0][0])) < 0.1 and abs(sf[0][0][1][0] - np.min(sf[0][0])) < 0.1 and abs(sf[0][0][1][1] - np.max(sf[0][0])) < 0.1:
-        setText('BCC\n')
-    elif abs(sf[0][0][0][2] - np.max(sf[0][0])) < 0.1 and abs(sf[0][0][2][0] - np.max(sf[0][0])) < 0.1 and abs(sf[0][0][1][1] - np.min(sf[0][0])) < 0.1:
-        setText('FCC\n')
-    elif abs(sf[0][0][1][1] - np.min(sf[0][0])) < 0.1 and abs(sf[1][0][0][1] - np.max(sf[1][0])) < 0.1 and abs(sf[2][0][0][1] - np.max(sf[2][0])) < 0.1:
-        setText('G\n')
-    elif abs(sf[0][0][2][0] - np.max(sf[0][0])) < 0.1 and abs(sf[0][0][1][2] - np.min(sf[0][0])) < 0.1 and abs(sf[1][0][0][2] - np.max(sf[1][0])) < 0.1:
-        setText('A15\n')
-    elif abs(sf[0][0][0][1] - np.min(sf[0][0])) < 0.1 and abs(sf[0][0][1][1] - np.max(sf[0][0])) < 0.1 and abs(sf[1][0][2][0] - np.min(sf[1][0])) < 0.1:
-        setText('csHelix\n')
-    elif abs(sf[0][0][1][0] - np.max(sf[0][0])) < 0.1 and abs(sf[0][0][2][1] - np.min(sf[0][0])) < 0.1 and abs(sf[1][0][2][1] - np.min(sf[1][0])) < 0.1:
-        setText('csHelix2\n')
-    elif abs(sf[0][0][0][2] - np.max(sf[0][0])) < 0.1 and abs(sf[0][0][2][1] - np.min(sf[0][0])) < 0.1 and abs(sf[1][0][0][2] - np.max(sf[1][0])) < 0.1:
-        setText('csσ\n')
+    # Print the result
+    # print(estimator.predict(matrix))
+    if estimator.predict(matrix)[0] > 0:
+        setText(classifier.predict(matrix)[0]+'\n')
+        setText(str(round(max(classifier.predict_proba(matrix)[0]),3)*100)+'%\n')
+    else:
+        setText('not a known phase\n')
     
+def vmstat():
+    message=sshcommand("rsh " + nodeVar.get() + " 'vmstat'")
+    setText(nodeVar.get() + ": " + message.strip('\n').split('\n')[-1].strip(' ').split(' ')[0]+' tasks running\n')
 
 if __name__ == '__main__':
-    
     #Initializing GUI
     root = Tk()
     root.resizable(width=False, height=False)
@@ -471,11 +548,6 @@ if __name__ == '__main__':
 
     entry=[]
     frame = Frame(root)
-    buttonframe = Frame(root)
-    resultText = Text(root,height=20,width=85)
-    cmdEntry = Entry(root,width=85)
-    cmdEntry.bind('<Key-Return>', entryCommand)
-    setText("WELCOME TO ABCDEN\n")
 
     for i in range(len(labels)):
         entry.append(Entry(frame))
@@ -483,6 +555,7 @@ if __name__ == '__main__':
         entry[i].insert(10,defaults[i])
         entry[i].grid(row=i//3,column=(i%3)*2+1)
 
+    buttonframe = Frame(root)
     Button(buttonframe, text='generate',command=generate,width=15).grid(row=0,column=0,padx=5,pady=5)
     Button(buttonframe, text='update',command=update,width=15).grid(row=0,column=1,padx=5,pady=5)
     Button(buttonframe, text='run',command=run,width=15).grid(row=0,column=2,padx=5,pady=5)
@@ -491,11 +564,26 @@ if __name__ == '__main__':
     Button(buttonframe, text='top',command=top,width=15).grid(row=1,column=0,padx=5,pady=5)
     Button(buttonframe, text='getpha',command=getfile,width=15).grid(row=1,column=1,padx=5,pady=5)
     Button(buttonframe, text='classify',command=classify,width=15).grid(row=1,column=2,padx=5,pady=5)
-    Button(buttonframe, text='mayavi',command=mayavi,width=15).grid(row=1,column=3,padx=5,pady=5)
+    Button(buttonframe, text='mayavi',command=mayavi,width=15).grid(row=1,column=4,padx=5,pady=5)
+    Button(buttonframe, text='printout',command=printout,width=15).grid(row=0,column=5,padx=5,pady=5)
+    Button(buttonframe, text='autoremove',command=autoremove,width=15).grid(row=1,column=3,padx=5,pady=5)
     btmatlab = Button(buttonframe, text='matlab',command=matlab,width=15)
+
+    nodeframe = Frame(root)
+    nodeVar=StringVar(root)
+    nodeVar.set('c0102')
+    nodes=['c0102','c0103','c0105','c0106','c0108','c0109','c0110','c0111','c0112','c0113']
+    for i, item in enumerate(nodes):
+        Radiobutton(nodeframe, text=item, variable=nodeVar, value=item,command=vmstat).grid(row=0,column=i,padx=5)
+
+    resultText = Text(root,height=20,width=85)
+    cmdEntry = Entry(root,width=85)
+    cmdEntry.bind('<Key-Return>', entryCommand)
+    setText("WELCOME TO ABCDEN\n")
     
     frame.pack()
     buttonframe.pack()
+    nodeframe.pack()
     resultText.pack()
     cmdEntry.pack()
 
@@ -504,18 +592,22 @@ if __name__ == '__main__':
     t.start()
 
     #Load sftp
-    private_key = paramiko.RSAKey.from_private_key_file('C:/Users/Birfy/.ssh/id_rsa')
+    # private_key = paramiko.RSAKey.from_private_key_file('C:/Users/Birfy/.ssh/id_rsa')
     transport = paramiko.Transport(('10.158.131.62', 22))
-    transport.connect(username='cdy', pkey=private_key)
+    # transport.connect(username='NXW', pkey=private_key)
+    transport.connect(username='cdy', password='birfy19970405')
     sftp = paramiko.SFTPClient.from_transport(transport)
     setText('SFTP IS LOADED\n')
 
     #Load ssh
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(hostname='10.158.131.62',port=22,username='cdy')
+    ssh.connect(hostname='10.158.131.62',port=22,username='cdy',password='birfy19970405')
+    # ssh.connect(hostname='10.158.131.62',port=22,username='NXW')
     setText('SSH IS LOADED\n')
     
+    vmstat()
+
     root.mainloop()
 
     #Close the services
