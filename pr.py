@@ -35,9 +35,9 @@ def geteig(file,nx,ny,nz):
     d=8
 
     #DFT
-    sf[0] = [np.fft.fft2(item[int(nx/2),::,::],[64*d,64*d]).real[0:int(4*d),0:int(4*d)] for item in pha]
-    sf[1] = [np.fft.fft2(item[::,int(ny/2),::],[64*d,64*d]).real[0:int(4*d),0:int(4*d)] for item in pha]
-    sf[2] = [np.fft.fft2(item[::,::,int(nz/2)],[64*d,64*d]).real[0:int(4*d),0:int(4*d)] for item in pha]
+    sf[0] = [np.fft.fft2(item[int(nx/2),::,::],[ny*d,nz*d]).real[0:int(4*d),0:int(4*d)] for item in pha]
+    sf[1] = [np.fft.fft2(item[::,int(ny/2),::],[nx*d,nz*d]).real[0:int(4*d),0:int(4*d)] for item in pha]
+    sf[2] = [np.fft.fft2(item[::,::,int(nz/2)],[nx*d,ny*d]).real[0:int(4*d),0:int(4*d)] for item in pha]
     #Coordinate of sf: three slices, three components, 2D Fourier Square
 
     #Eliminate the main peak at (0,0)
@@ -62,10 +62,10 @@ def geteig(file,nx,ny,nz):
         setText('csσ\n')
     return sf
 
-sf=geteig('d:/SCFT/pha.dat',64,64,64)
+sf=geteig('d:/SCFT/pha.dat',128,128,64)
 
 #Plot
-plt.imshow(sf[0][0])
+plt.imshow(sf[0][1])
 plt.show()
 
 # import os

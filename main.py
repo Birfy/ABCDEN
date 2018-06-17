@@ -84,7 +84,6 @@ def printout():
     def getprintout():
         setText('GETTING PRINTOUT\n')
         result=[]
-        pathlist=[]
         for i in range(len(labels)):
             result.append(entry[i].get().strip())
         message = sshcommand("rsh c0103 ' cat "+result[-1]+"/printout.txt '")
@@ -98,8 +97,8 @@ def autoremove():
     Remove the selected direction
     '''
     def selectremove():
-        id = [item.split(' ')[0] for item in sshcommand("rsh " + nodeVar.get() + " 'ps -A w|grep 'a0\.[0-9]*b0\.[0-9]*x[0-9]\.[0-9]*''").strip('\n').split('\n')]
-        name = [item.split(' ')[-1] for item in sshcommand("rsh " + nodeVar.get() + " 'ps -A w|grep 'a0\.[0-9]*b0\.[0-9]*x[0-9]\.[0-9]*''").strip('\n').split('\n')]
+        id = [item.strip(' ').split(' ')[0] for item in sshcommand("rsh " + nodeVar.get() + " 'ps -A w|grep 'a0\.[0-9]*b0\.[0-9]*x[0-9]\.[0-9]*''").strip('\n').split('\n')]
+        name = [item.strip(' ').split(' ')[-1] for item in sshcommand("rsh " + nodeVar.get() + " 'ps -A w|grep 'a0\.[0-9]*b0\.[0-9]*x[0-9]\.[0-9]*''").strip('\n').split('\n')]
         remove=Tk()
         remove.title("Autoremove")
         remove.resizable(width=False, height=False)
@@ -454,8 +453,72 @@ def entryCommand(command):
     '''
     def putcommand():
         command=cmdEntry.get().strip()
-        message=sshcommand("rsh " + nodeVar.get() + " '"+command+"'")
-        setText(message+'\n')
+        if command == 'whoislwh':
+            lwh=Tk()
+            lwh.title('lwh')
+            lwhText=Text(lwh,height=57,width=85)
+            lwhText.insert(END,\
+"kkkc...;k000kkkkOO0O0d,';::ooloooooooodk;...':loxkxxxk0k'..ldl,;:odxO00k;''';l'',olcc\n\
+kx;...:xOOOkxkkkxkOkOkdc;::colllllolloo;....cddxxxxxdxOk,..ldc,,coooxxkkkl,'.''',olcl\n\
+o,..'cddkkxxdxkxddddxkxdl:::,,cloodddc'.....,odxxxdddxkO,..cocccoooodddoxkOo,''.'cllo\n\
+...'coodddxxdxxkkdoooxo;:lc:;,;oddxd:';:dd,''cddxxdlodkO,..:cccooooodoloodkOOc'''';co\n\
+;;:ccoodxxkkxkkxddoclko,;:ddl::cdO000XNWWWWWXKK0OkxlloxO;..',;;;;,,;:c:cccldko''''',;\n\
+lloocdkOOOOOOOOkxxddxkoc::dxxod0NNWWWWWWWWWWWWWWWWWNKOkO:..',;c:;;;:::cllooxOo'';l,''\n\
+oodkOOO00O0OO00000kkkxxxdk00XNNWWMWWWWWWWWWWWWWWWWWWWWWNOo;,,lddooddxxdxxxxkOo'';kOl,\n\
+OO00OO0OOO00OO00KK0000KKNNNWWWWWWMWWWWMWWWWWWWWWWWWWWWWWWWNOodddccoddddddddkOo'';ok0O\n\
+00KK00000OOOOOO000KXNNWWWWWWMMWWWWWWWWWWMWWWWWWMWWWWWWWWWWWWNXOxlcoddddxddxkOl'';odkd\n\
+KKKKK0KKK00OO000KNWWWWWMWWMWMMWWWMWWWMWWMWWWWWWWWWWWWWWWWWWWNNNXkkkddddxddxkOl';cxxl,\n\
+KKKKKK00000OO00XNWWWWMMWWWWWMWWWWWWWWWWWWWWWWWWWWWWWWWWWNNWWNNNNNX0kxkkddxxxOdxkO0Okx\n\
+KKKKKKK00000KKKNWMWWWWWWWWWWWWWWWWWWWWWNNWWWWWNNWWWNNNNNNNNNNNNNNNNXOOxodxxO00KKKOxOK\n\
+0KKKKKK000KXXXNWWMWWWWWWWWWWWWWWNWWWWNXNXXNNNNNXNWNNNXXXXXNNNNNNNNXX0kkxxk0KXXKKK0kkX\n\
+KKK0KKKK000KXWWWWWWWWWWWWWWWNNNNNNWNNKKX0KXXKXXKXNXXXXKKKKXXXNNXNNXXXK0OO0KKXXXKKK00K\n\
+KKXXXXXXK00KNWWWWWWWWWWWWWWNXNNNXXNXX0O0OO00OOKK0KK0KKOO000KKXXNNXNXXXXXKKXXXXXKKKXXK\n\
+0KXXKXKKK00XWWWWWWWWWWWWNNNXKXXX00XK0OOOkxkxodxOxOOO0OdxkOO0O0KXNNNNXXX0KKXXXXXKKXKXK\n\
+KKKKKKXKK0KXWWWWWWWWWWWNXXX00K00Ok0kkkkxxodlclldodxkkdoldxxkkkOKNWNNXNNXXKKKXXNXXXXKK\n\
+o0KKKKKKKKKXNWWWWNWWWWWXKKKO00Okddxdooollcc:::cllllolccccclooox0NWWNNNNXKKKXXXXNXXXXK\n\
+;xOOKXKKKO0XNWWWWWWMMWWX00Okkkxdolll::::;;,,,;;::;;;;;;;;:ccllokXNWWNWNK0XX0XK00XKKXX\n\
+ocdolcdx0xl0NMMMWMMMMWN0kkkkkxxxdollcc:;;;,',,',;;,;;::::clllcloKNNNNWNKkXXKX00000xOK\n\
+;,ddlcodO:cKWMMMWMMMWN0OkkkOkkkkOOOOkxdolcc:;;;:ccloxxxxxdooooll0NNNNNNXXXXXKkd0KKOdd\n\
+..;ll:::dcxXWWWWWWWWWKOkkkkkkxxdolcccloodolc:::cllooollccllllllckWNNNNNXXXK0Okk00K000\n\
+,'.';'c;coxKK0KKKNWWN0Okxxxxxxxxxkkkkdoooddl:;:coodxOOOkddlcccloxNNKKNXXNNK00KXK00KXK\n\
+:::;;l0kxxkK0O0OO0NWX0OOOOOdxxkkkxxxddolokkOdolxoloxxkkxoddlcclxkXXOOXXXXNKKXNNNWNNXX\n\
+oooodk00KKXNNOOkk0NNXOkxxxxdddooooolllclxkkdc;;oxocloolllccccc:llKXxONNNNNXXNWWWWWNNN\n\
+0000KKOO0KXNN0kkOKNNXOkkxddoollccccc::cloddlc;,:lc::::::;;::::::cO0kXNNNNXNNWWWWNNWWW\n\
+000000O0O0000OkkOO0NX0kkxdooolcccccccloddddl:;,;;:c:::::;;;;,,;;cdodKXXXKKXK00KKKKXXN\n\
+kkOOOOOkOOOOOkxxxkO0XKOkxdolcc:;;;;:cloxxdol:;,;;:::;;;;,,'',,;;:::dkkOOxl;;xOOOO0O00\n\
+::cccc:;:ccccc:oxxxO00Okxxdlcc::;::cloxddool:;',;;:::::;;,,,,;;:;;:oddddoc''loododddd\n\
+cccccc::ccc:;;,llddxkOkkxxdolccccclooxOxxxxdl:;;:c::::llc:;;;;::;:looooodkxoodddddddx\n\
+dddddooooooool;oooddxkkkxxxdolllllloodxk0KK0kdlloolc::ccll:::::coooooddddkdoodddddodx\n\
+xddddooooooooolllllooxOkkxxdolloooddxxdxxxxxdoolcclcccllclc::::cllllllllllclooooodddx\n\
+llllllllllllllllllllldKOkxxxdlloddxkkxxxxxdollccclllcllllc::::cclllllllllc:;cllllllll\n\
+lllllllllllllllllllllloxkkkxdolloddxKX0xdool:c::clxKOollc:::::cccccccccccccccccccclll\n\
+ooooooooooooooooooooooookkkkkddloddddxkdxdoc;;;;llooccccc:::ccccllllllllllcccllllllll\n\
+ooooooooooooooooooooooooxkkkkkxdodddxxkxdoolcccclllc:ccc:cccclllllllccccccccccccccccc\n\
+llllllllllllllllllllllllokkkkkkxddxxxxxxxxddoooolcc::c:::ccccccccccccccccccc::::ccccc\n\
+ccccccccccccccccccccclllldkkkkkkxddxddddddddddolcc:::::::cccclcccccccccccccccccccllll\n\
+cccccccccllclccclllllllllokkkkkkkkxddoooollcccc::::;;::ccccccllllllllllllllllllllllll\n\
+lllllllllllllllllllllllllokkkkkkkkkkddollc:::::::::::cccc:::cllllllllllllllllllllllll\n\
+llllllllllllllllllllllllllxkkkkkkkkkkkkxoolccclllllllcc:::::cllllllllllllllllllllllll\n\
+lllllllllllllllllllllllllldkkkkkkOOOkkkkkxddddddoollcc:::::::ccllllllllllllllllllllll\n\
+cccllllllllllllllllllllllldxxkkkkkkkkkkOkkxxdollccc:::;;;;;:::::cccccllllllllllllllll\n\
+llllllllllcllcllllllllcccdxxxxxxxxxxxxxddolcc::::::::;;;;;;;;;;;;;::,.,;:lllllllloooo\n\
+lllllllllllllllllllcc:;;cxxxxxxxddddddddoolc::::::;;;;;;;;;;;;;;;,,;.    .,cllloooooo\n\
+llllllllllllllllc:;;,,,,;oddddddddoooddooolc::::;;;;;;;;;;;;;;;;,,,'        ..,:lllll\n\
+lllllllccccc:;;,,,,,,,,,,;ldddddddoooooolllcc:::;;;;;;;;;;;;;;,,,,;.            ..,;c\n\
+cccccc:;,'''.............'',cooodddolllllcccc:::;;;;;;;;;,,,,,,,;,.                  \n\
+,,''.........................',:lddolc:cccc:::::;;;;;;,,,,,,,,;'.                    \n\
+.................................,col:;;;;::::::;;,,,,,,,,,'..                       \n\
+........................................'',,;;;;;,,,,''...                           \n\
+.............................              ......                                    \n\
+..........................                                                           \n\
+      ....................                                                           \n\
+       ..................                                                            \n\
+          ... .   ..  ...                                                            \n")
+            lwhText.pack()
+            lwh.mainloop()
+        else:
+            message=sshcommand("rsh " + nodeVar.get() + " '"+command+"'")
+            setText(message+'\n')
     t=threading.Thread(target=putcommand)
     t.start()
 
@@ -487,7 +550,7 @@ def classify():
         d=2
 
         # FFT the concentration to a 64*64*64 matrix
-        sf = abs(np.fft.fftn(pha[0],[64*d,64*d,64*d]))[0:int(4*d),0:int(4*d),0:int(4*d)]
+        sf = abs(np.fft.fftn(pha[0],[nx*d,ny*d,nz*d]))[0:int(4*d),0:int(4*d),0:int(4*d)]
         
         sf /= sf[0][0][0]
         return sf

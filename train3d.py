@@ -4,28 +4,21 @@ def geteig(filename,nx=64,ny=64,nz=64):
     '''
 
     # Read pha file
-    phafile = open(filename, 'r')
-    phalines = phafile.readlines()
-    pha = [[], [], []]
-    sf = []
-    for item in phalines:
+    pha = []
+    sf=[]
+    for item in open(filename, 'r'):
         if not item == '\n':
-            list = item.split(' ')
-            pha[0].append(float(list[0]))
-            pha[1].append(float(list[1]))
-            pha[2].append(float(list[2]))
-    phafile.close()
+            pha.append(float(item.split(' ')[0]))
+    # phafile.close()
 
     # Convert the pha to a nx*ny*nz matrix
-    pha = [np.array(item).reshape(nx, ny, nz) for item in pha]
+    pha = np.array(pha).reshape(nx, ny, nz)
 
     # The size of Fourier Space divided by size of pha
     d=2
 
     # FFT the concentration to a 64*64*64 matrix
-    sf = abs(np.fft.fftn(pha[0],[64*d,64*d,64*d]))[0:int(4*d),0:int(4*d),0:int(4*d)]
-
-    del pha
+    sf = abs(np.fft.fftn(pha,[nx*d,ny*d,nz*d]))[0:int(4*d),0:int(4*d),0:int(4*d)]
     # sf = [abs(np.fft.fftn(item,[64*d,64*d,64*d]))[0:int(4*d),0:int(4*d),0:int(4*d)] for item in pha]
     # sf[1] = [abs(np.fft.fftn(item,[1,64*d,64*d]))[:,0:int(4*d),0:int(4*d)].reshape(int(4*d),int(4*d)) for item in pha]
     # sf[2] = [abs(np.fft.fftn(item,[64*d,1,64*d]))[0:int(4*d),:,0:int(4*d)].reshape(int(4*d),int(4*d)) for item in pha]
@@ -54,6 +47,7 @@ images=[]
 # The labels of each image to identify which phase it belongs to
 target=[]
 
+import sys
 # Read phas from file and convert them into fft matrixs
 path=os.listdir('d:/nonfrustrated/nonfrustrated/633')
 for item in path:
@@ -85,6 +79,11 @@ for item in path:
     images.append(geteig('d:/nonfrustrated/nonfrustrated/0/'+item+'/pha.dat',64,64,64))
     target.append('Random')
     print(item)
+path=os.listdir('d:/nonfrustrated/nonfrustrated/6')
+for item in path:
+    images.append(geteig('d:/nonfrustrated/nonfrustrated/6/'+item+'/pha.dat',128,128,64))
+    target.append('csσ')
+    print(item)
 
 # Number of the samples
 n_samples = len(images)
@@ -96,7 +95,7 @@ data = np.array(images).reshape((n_samples, -1))
 classifier = svm.SVC(kernel='linear',probability=True)
 # estimator=svm.OneClassSVM(kernel='linear',nu=0.001)
 from sklearn.ensemble import IsolationForest
-estimator=IsolationForest(max_samples=n_samples,contamination=0.04,n_estimators=n_samples)
+estimator=IsolationForest(max_samples=n_samples,contamination=0.025,n_estimators=n_samples)
 # from sklearn.neighbors import LocalOutlierFactor
 # estimator=LocalOutlierFactor(n_neighbors=15,contamination=0.1)
 # from sklearn.covariance import EllipticEnvelope
