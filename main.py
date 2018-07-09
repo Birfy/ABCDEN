@@ -187,7 +187,7 @@ def run(path='',fA='',fB='',fC='',lx=0.0):
         t=threading.Thread(target=runonline)
         t.start()
 
-def downloadresult(pathlist):
+def downloadresult(pathlist, variable):
     '''
     Download the freeE in printout.txt from paths in pathlist and save to a file in ./freeE/
     File name is generated according to fA, fB, fC and lx
@@ -198,11 +198,11 @@ def downloadresult(pathlist):
 
     def downloadresultonline():
         writefile = open("./freeE/"+result[0]+'/'+pathlist[0].split('/')[-1]+'-'+pathlist[-1].split('/')[-1],'w',newline='\n')
-        for i in pathlist:
+        for i, path in enumerate(pathlist):
             setText("DOWNLOADING\n")
 
-            message=sshcommand("cat "+i+"/printout.txt|tail -1|cut -c 1-14")
-            writefile.write(message)
+            message=sshcommand("cat "+ path +"/printout.txt|tail -1|cut -c 1-14")
+            writefile.write(variable[i] + ' ' + message)
 
         writefile.close()
         setText("FREEDOWNLOADED\n")
@@ -279,15 +279,18 @@ def openmultirun():
             fb=eval('list(arange('+fb+'))')
             for i in fb:
                 pathlist.append(result[-1]+'/'+result[0]+'/a'+"%.3f" % float(fa)+'b'+"%.3f" % i+'x'+result[15])
+            downloadresult(pathlist, ["%.3f" % item for item in fb])
         elif v.get()==1:
             fa=eval('list(arange('+fa+'))')
             for i in fa:
                 pathlist.append(result[-1]+'/'+result[0]+'/a'+"%.3f" % i+'b'+"%.3f" % float(fb)+'x'+result[15])
+            downloadresult(pathlist, ["%.3f" % item for item in fa])
         elif v.get()==2:
             fa=eval('list(arange('+fa+'))')
             for i in fa:
                 pathlist.append(result[-1]+'/'+result[0]+'/a'+"%.3f" % i+'b'+"%.3f" % (1-i-float(fc))+'x'+result[15])
-        downloadresult(pathlist)
+            downloadresult(pathlist, ["%.3f" % item for item in fa])
+        
 
     btframe=Frame(mrroot)
     Button(btframe,text='run',command=multirun,width=10).grid(row=0,column=0,padx=5)
@@ -341,7 +344,7 @@ def openmultilx():
         lx=eval('list(arange('+lx+'))')
         for i in lx:
             pathlist.append(result[-1]+'/'+result[0]+'/a'+"%.3f" % float(result[12])+'b'+"%.3f" % float(result[13])+'x'+"%.3f" % (i*float(result[15])))
-        downloadresult(pathlist)
+        downloadresult(pathlist, ["%.3f" % (item*float(result[15])) for item in lx])
 
     btframe=Frame(mrroot)
     Button(btframe,text='run',command=multilx,width=10).grid(row=0,column=0,padx=5)

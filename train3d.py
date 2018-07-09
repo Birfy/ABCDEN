@@ -34,7 +34,7 @@ import matplotlib.pyplot as plt
 import os
 
 # Import datasets, classifiers and performance metrics
-from sklearn import datasets, svm, metrics
+from sklearn import svm, metrics
 
 # Import joblib to save the result
 from sklearn.externals import joblib

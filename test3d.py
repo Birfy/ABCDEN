@@ -40,7 +40,7 @@ with open('estimator.pkl','rb') as file:
     estimator=joblib.load(file)
 
 # Load a file and convert to fft matrix
-matrix = np.array(geteig('./pha.dat',128,128,64)).reshape((1,-1))
+matrix = np.array(geteig('./pha.dat',64,64,64)).reshape((1,-1))
 
 # Print the result
 # print(estimator.predict(matrix))
