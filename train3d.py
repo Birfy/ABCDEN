@@ -18,7 +18,7 @@ def geteig(filename,nx=64,ny=64,nz=64):
     d=2
 
     # FFT the concentration to a 64*64*64 matrix
-    sf = abs(np.fft.fftn(pha,[nx*d,ny*d,nz*d]))[0:int(4*d),0:int(4*d),0:int(4*d)]
+    sf = abs(np.fft.fftn(pha,[64*d,64*d,64*d]))[0:int(4*d),0:int(4*d),0:int(4*d)]
     # sf = [abs(np.fft.fftn(item,[64*d,64*d,64*d]))[0:int(4*d),0:int(4*d),0:int(4*d)] for item in pha]
     # sf[1] = [abs(np.fft.fftn(item,[1,64*d,64*d]))[:,0:int(4*d),0:int(4*d)].reshape(int(4*d),int(4*d)) for item in pha]
     # sf[2] = [abs(np.fft.fftn(item,[64*d,1,64*d]))[0:int(4*d),:,0:int(4*d)].reshape(int(4*d),int(4*d)) for item in pha]

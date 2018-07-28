@@ -41,6 +41,7 @@ void initW_LAM2(double *wA, double *wB, double *wC);
 void initW_RC(double *wA, double *wB, double *wC);
 void initW_H1C(double *wA, double *wB, double *wC);
 void initW_aPS(double *wA, double *wB, double *wC);
+void initW_aPL(double *wA, double *wB, double *wC);
 
 int ZDIMM, NsA, NsB, NsC, NsB1, NsB2, NsB3;
 double lx, ly, lz, ds0;
@@ -226,6 +227,8 @@ void init(int in, double *wA, double *wB, double *wC)
 		initW_csG(wA, wB, wC);
 	else if (in == 6)
 		initW_csSigma(wA, wB, wC);
+	else if (in == 1612)
+		initW_csPL(wA, wB, wC);
 	else if (in == 1)
 	{
 		fp = fopen("in.d", "r");
@@ -1061,7 +1064,7 @@ void initW_csC(double *wA, double *wB, double *wC)
 	double xi, yj, rij, rb, ra;
 	double phat, phbt, phct;
 	FILE *fp;
-	fp = fopen("init_csCHex.dat", "w");
+	fp = fopen("init_csC.dat", "w");
 
 	ra = pow(fAinit / (fA + fB + fC) * lx * ly / (2 * Pi), 1.0 / 2);
 	rb = pow((fAinit + fBinit) / (fA + fB + fC) * lx * ly / (2 * Pi), 1.0 / 2);
@@ -1643,6 +1646,129 @@ void initW_csHelix2(double *wA, double *wB, double *wC)
 					}
 				}
 
+				phat = 0.0;
+				phbt = 0.0;
+				phct = 1.0;
+
+				if (tag == 1)
+				{
+					phat = 0.0;
+					phbt = 1.0;
+					phct = 0.0;
+				}
+				else if (tag == 2)
+				{
+					phat = 1.0;
+					phbt = 0.0;
+					phct = 0.0;
+				}
+				ijk = (long)((i * Ny + j) * Nz + k);
+				wA[ijk] = hAB * phbt + hAC * phct + 0.040 * (drand48() - 0.5);
+				wB[ijk] = hAB * phat + hBC * phct + 0.040 * (drand48() - 0.5);
+				wC[ijk] = hAC * phat + hBC * phbt + 0.040 * (drand48() - 0.5);
+				if (aismatrix == 0)
+					fprintf(fp, "%lf %lf %lf %lf %lf %lf\n", phat, phbt, phct, wA[ijk], wB[ijk], wC[ijk]);
+				else if (aismatrix == 1)
+					fprintf(fp, "%lf %lf %lf %lf %lf %lf\n", phct, phbt, phat, wC[ijk], wB[ijk], wA[ijk]);
+			}
+		}
+	}
+	fclose(fp);
+}
+
+void initW_csPL(double *wA, double *wB, double *wC)
+{
+	int i, j, k, nc, tag;
+	long ijk;
+	double xij, yij, zij;
+	double xc[9], yc[9], zc[3];
+	double xi, yj, zk, rij, lij, rc, la, lb;
+	double phat, phbt, phct;
+	FILE *fp;
+	fp = fopen("init_csPL.dat", "w");
+
+	rc = pow((fAinit + fBinit) / (fA + fB + fC) * lx * ly / (4 * Pi), 1.0 / 2);
+
+	la = fAinit / (fA + fB + fC) * lx / 4;
+	lb = (fAinit + fBinit) / (fA + fB + fC) * lx / 4;
+
+	zc[0] = 0.0;
+	zc[1] = lz;
+	zc[2] = lz / 2;
+	xc[0] = 0.0;
+	yc[0] = 0.0;
+	xc[1] = 0.0;
+	yc[1] = ly;
+	xc[2] = lx;
+	yc[2] = 0.0;
+	xc[3] = lx;
+	yc[3] = ly;
+	xc[4] = lx / 2;
+	yc[4] = ly / 2;
+	xc[5] = 0.0;
+	yc[5] = ly / 2;
+	xc[6] = lx / 2;
+	yc[6] = 0.0;
+	xc[7] = lx / 2;
+	yc[7] = ly;
+	xc[8] = lx;
+	yc[8] = ly / 2;
+
+	for (i = 0; i < Nx; i++)
+	{
+		xi = i * dx;
+		for (j = 0; j < Ny; j++)
+		{
+			yj = j * dy;
+			for (k = 0; k < Nz; k++)
+			{
+				zk = k * dz; 
+				tag = 0;
+				for (nc = 0; nc < 3; nc++)
+				{
+					zij = zk - zc[nc];
+					lij = sqrt(zij * zij);
+					if (lij < lb)
+					{
+						tag = 1;
+						if (lij < la)
+						{
+							tag = 2;
+						}
+					}
+				}
+				if ((zk < lz * 3 / 4) && (zk > lz * 1 / 4))
+				{
+				for (nc = 0; nc < 5; nc++)
+				{
+					xij = xi - xc[nc];
+					yij = yj - yc[nc];
+
+					rij = xij * xij + yij * yij;
+					rij = sqrt(rij);
+					if (rij < rc)
+					{
+						tag = 3;
+					
+					}
+				}
+				}
+				else
+				{
+				for (nc = 5; nc < 9; nc++)
+				{
+					xij = xi - xc[nc];
+					yij = yj - yc[nc];
+
+					rij = xij * xij + yij * yij;
+					rij = sqrt(rij);
+					if (rij < rc)
+					{
+						tag = 3;
+					
+					}
+				}
+				}
 				phat = 0.0;
 				phbt = 0.0;
 				phct = 1.0;

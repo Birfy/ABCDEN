@@ -13,6 +13,11 @@ import numpy as np
 import os
 import threading
 import paramiko
+from matplotlib import pyplot
+from scipy import optimize
+from mayavi import mlab
+from sklearn.externals import joblib
+import time
 
 def setText(text):
     '''
@@ -132,14 +137,12 @@ def autoremove():
                     sshcommand("rsh " + nodeVar.get() + " 'rm -rf "+result[-1]+'/'+name_init[j]+'/'+name_name[j]+"'")
                     setText(result[-1]+'/'+name_init[j]+'/'+name_name[j]+' REMOVED\n')
 
-        Button(remove, text='Kill', command=autoremove_kill, width=20).grid(row=j, column=0 , pady=4)
-        Button(remove, text='Remove', command=autoremove_remove, width=20).grid(row=j, column=1, pady=4)
+        Button(remove, text='Kill', command=autoremove_kill, width=20).grid(row=len(name)//2+1, column=0 , pady=4)
+        Button(remove, text='Remove', command=autoremove_remove, width=20).grid(row=len(name)//2+1, column=1, pady=4)
 
         remove.mainloop()
     t=threading.Thread(target=selectremove)
     t.start()
-
-
 
 def update():
     '''
@@ -197,15 +200,33 @@ def downloadresult(pathlist, variable):
         result.append(entry[i].get().strip())
 
     def downloadresultonline():
-        writefile = open("./freeE/"+result[0]+'/'+pathlist[0].split('/')[-1]+'-'+pathlist[-1].split('/')[-1],'w',newline='\n')
+        writefile = open("./freeE/"+result[0]+'/'+pathlist[0].split('/')[-1].split('x')[0]+'-'+pathlist[-1].split('/')[-1].split('x')[0],'w',newline='\n')
+        
+        variablefloat=[]
+        energyfloat=[]
+
         for i, path in enumerate(pathlist):
             setText("DOWNLOADING\n")
 
             message=sshcommand("cat "+ path +"/printout.txt|tail -1|cut -c 1-14")
-            writefile.write(variable[i] + ' ' + message)
+            try:
+                float(message)
+                writefile.write(variable[i] + ' ' + message)
+                variablefloat.append(float(variable[i]))
+                energyfloat.append(float(message))
+            except Exception:
+                pass
 
         writefile.close()
         setText("FREEDOWNLOADED\n")
+
+        def f_2(x, A, B, C):
+            return A*x*x + B*x + C
+
+        A, B, C = optimize.curve_fit(f_2, variablefloat, energyfloat)[0]
+        setText("Extreme Point: "+ str(-B/(2*A))+'\n')
+
+        # os.system("code ./freeE/"+result[0]+'/'+pathlist[0].split('/')[-1]+'-'+pathlist[-1].split('/')[-1])
     t=threading.Thread(target=downloadresultonline)
     t.start()
 
@@ -290,11 +311,140 @@ def openmultirun():
             for i in fa:
                 pathlist.append(result[-1]+'/'+result[0]+'/a'+"%.3f" % i+'b'+"%.3f" % (1-i-float(fc))+'x'+result[15])
             downloadresult(pathlist, ["%.3f" % item for item in fa])
+    
+    def getperiod(pathlist,variable):
+        '''
+        Get a period from a pathlist
+        '''
         
+        variablefloat=[]
+        energyfloat=[]
+
+        for i, path in enumerate(pathlist):
+
+            message=sshcommand("cat "+ path +"/printout.txt|tail -1|cut -c 1-14")
+            variablefloat.append(float(variable[i]))
+            energyfloat.append(float(message))
+
+        def f_2(x, A, B, C):
+            return A*x*x + B*x + C
+
+        A, B, C = optimize.curve_fit(f_2, variablefloat, energyfloat)[0]
+        setText("Extreme Point: "+ str(-B/(2*A))+'\n')
+        return -B/(2*A)
+
+    def ultrarun():
+        '''
+        Automatically run with changing the period
+        '''
+
+        def killpathlist(pathlist):
+            id = [item.strip(' ').split(' ')[0] for item in sshcommand("rsh " + nodeVar.get() + " 'ps -A w|grep 'a0\.[0-9]*b0\.[0-9]*x[0-9]\.[0-9]*''").strip('\n').split('\n')]
+            name = [item.strip(' ').split(' ')[-1] for item in sshcommand("rsh " + nodeVar.get() + " 'ps -A w|grep 'a0\.[0-9]*b0\.[0-9]*x[0-9]\.[0-9]*''").strip('\n').split('\n')]
+
+            namedict=dict(zip(name,id))
+            for path in pathlist:
+                if './'+path.split('/')[-2]+path.split('/')[-1] in namedict.keys():
+                    sshcommand("rsh " + nodeVar.get() + " 'kill "+namedict['./'+path.split('/')[-2]+path.split('/')[-1]]+"'")
+                    setText(namedict['./'+path.split('/')[-2]+path.split('/')[-1]]+' KILLED\n')
+
+
+        def ultrarunonline():
+            fa=entryfa.get().strip()
+            fb=entryfb.get().strip()
+            fc=entryfc.get().strip()
+
+            originalperiod=float(result[15])
+            period=originalperiod
+            lxrange=list(arange(0.92,1.09,0.04))
+            sleeptime=480
+
+
+            if v.get()==0:
+                fb=eval('list(arange('+fb+'))')
+                for i in fb:
+                    pathlist=[]
+                    for j in lxrange:
+                        run(path=result[-1]+'/'+result[0]+'/a'+"%.3f" % float(fa)+'b'+"%.3f" % i+'x'+"%.3f" % (period*j),fA="%.3f" % float(fa),fB="%.3f" % i,fC="%.3f" % (1-float(fa)-i),lx=j*period/originalperiod)
+                        pathlist.append(result[-1]+'/'+result[0]+'/a'+"%.3f" % float(fa)+'b'+"%.3f" % i+'x'+"%.3f" % (period*j))
+                    time.sleep(sleeptime)
+                    setText('Period for '+result[-1]+'/'+result[0]+'/a'+"%.3f" % float(fa)+'b'+"%.3f" % i + '\n')
+                    period=getperiod(pathlist,["%.3f" % (item*period) for item in lxrange])
+                    with open("./period/"+result[0]+'/'+'a'+"%.3f" % float(fa),'a',newline='\n') as file:
+                        file.write("%.3f" % float(fa) + ' ' + "%.3f" % i + ' ' + "%.3f" % period+'\n')
+                    killpathlist(pathlist)
+                    run(path=result[-1]+'/'+result[0]+'/a'+"%.3f" % float(fa)+'b'+"%.3f" % i+'x'+'%.3f' % period,fA="%.3f" % float(fa),fB="%.3f" % i,fC="%.3f" % (1-float(fa)-i),lx=period/originalperiod)
+
+            elif v.get()==1:
+                fa=eval('list(arange('+fa+'))')
+                for i in fa:
+                    pathlist=[]
+                    for j in lxrange:
+                        run(path=result[-1]+'/'+result[0]+'/a'+"%.3f" % i+'b'+"%.3f" % float(fb)+'x'+"%.3f" % (period*j),fA="%.3f" % i,fB="%.3f" % float(fb),fC="%.3f" % (1-i-float(fb)),lx=j*period/originalperiod)
+                        pathlist.append(result[-1]+'/'+result[0]+'/a'+"%.3f" % i+'b'+"%.3f" % float(fb)+'x'+"%.3f" % (period*j))
+                    time.sleep(sleeptime)
+                    setText('Period for '+result[-1]+'/'+result[0]+'/a'+"%.3f" % i+'b'+"%.3f" % float(fb) + '\n')
+                    period=getperiod(pathlist,["%.3f" % (item*period) for item in lxrange])
+                    with open("./period/"+result[0]+'/'+'b'+"%.3f" % float(fb),'a',newline='\n') as file:
+                        file.write("%.3f" % i + ' ' + "%.3f" % float(fb) + ' ' + "%.3f" % period+'\n')
+                    killpathlist(pathlist)
+                    run(path=result[-1]+'/'+result[0]+'/a'+"%.3f" % i+'b'+"%.3f" % float(fb)+'x'+'%.3f' % period,fA="%.3f" % i,fB="%.3f" % float(fb),fC="%.3f" % (1-i-float(fb)),lx=period/originalperiod)
+            elif v.get()==2:
+                fa=eval('list(arange('+fa+'))')
+                for i in fa:
+                    pathlist=[]
+                    for j in lxrange:
+                        run(path=result[-1]+'/'+result[0]+'/a'+"%.3f" % i+'b'+"%.3f" % (1-i-float(fc))+'x'+"%.3f" % (period*j),fA="%.3f" % i,fB="%.3f" % (1-i-float(fc)),fC="%.3f" % float(fc),lx=j*period/originalperiod)
+                        pathlist.append(result[-1]+'/'+result[0]+'/a'+"%.3f" % i+'b'+"%.3f" % (1-i-float(fc))+'x'+"%.3f" % (period*j))
+                    time.sleep(sleeptime)
+                    setText('Period for '+result[-1]+'/'+result[0]+'/a'+"%.3f" % i+'b'+"%.3f" % (1-i-float(fc)) + '\n')
+                    period=getperiod(pathlist,["%.3f" % (item*period) for item in lxrange])
+                    with open("./period/"+result[0]+'/'+'c'+"%.3f" % float(fc),'a',newline='\n') as file:
+                        file.write("%.3f" % i + ' ' + "%.3f" % (1-i-float(fc)) + ' ' + "%.3f" % period+'\n')
+                    killpathlist(pathlist)
+                    run(path=result[-1]+'/'+result[0]+'/a'+"%.3f" % i+'b'+"%.3f" % (1-i-float(fc))+'x'+'%.3f' % period,fA="%.3f" % i,fB="%.3f" % (1-i-float(fc)),fC="%.3f" % float(fc),lx=period/originalperiod)
+
+        t=threading.Thread(target=ultrarunonline)
+        t.start()
+
+    def ultraresult():
+        '''
+        Get the freeE result in the range
+        '''
+        fa=entryfa.get().strip()
+        fb=entryfb.get().strip()
+        fc=entryfc.get().strip()
+        
+        pathlist=[]
+        variable=[]
+        if v.get()==0:
+            with open("./period/"+result[0]+'/'+'a'+"%.3f" % float(fa),'r',newline='\n') as file:
+                for line in file.readlines():  
+                    line=line.strip('\n')
+                    pathlist.append(result[-1]+'/'+result[0]+'/a'+line.split(' ')[0]+'b'+line.split(' ')[1]+'x'+line.split(' ')[2])
+                    variable.append(line.split(' ')[1])
+                downloadresult(pathlist, variable)
+        elif v.get()==1:
+            with open("./period/"+result[0]+'/'+'b'+"%.3f" % float(fb),'r',newline='\n') as file:
+                for line in file.readlines():
+                    line=line.strip('\n')
+                    pathlist.append(result[-1]+'/'+result[0]+'/a'+line.split(' ')[0]+'b'+line.split(' ')[1]+'x'+line.split(' ')[2])
+                    variable.append(line.split(' ')[0])
+                downloadresult(pathlist, variable)
+        elif v.get()==2:
+            with open("./period/"+result[0]+'/'+'c'+"%.3f" % float(fc),'r',newline='\n') as file:
+                for line in file.readlines():
+                    line=line.strip('\n')
+                    pathlist.append(result[-1]+'/'+result[0]+'/a'+line.split(' ')[0]+'b'+line.split(' ')[1]+'x'+line.split(' ')[2])
+                    variable.append(line.split(' ')[0])
+                downloadresult(pathlist, variable)
+    
 
     btframe=Frame(mrroot)
     Button(btframe,text='run',command=multirun,width=10).grid(row=0,column=0,padx=5)
     Button(btframe,text='getresult',command=getresult,width=10).grid(row=0,column=1,padx=5)
+    Button(btframe,text='ultrarun',command=ultrarun,width=10).grid(row=0,column=2,padx=5)
+    Button(btframe,text='ultraresult',command=ultraresult,width=10).grid(row=0,column=3,padx=5)
 
     mrframe.pack()
     btframe.pack()
@@ -374,7 +524,7 @@ def mayavi():
     '''
     Using Mayavi to plot
     '''
-    from mayavi import mlab
+    
 
     setText('PLOTTING\n')
 
@@ -456,72 +606,9 @@ def entryCommand(command):
     '''
     def putcommand():
         command=cmdEntry.get().strip()
-        if command == 'whoislwh':
-            lwh=Tk()
-            lwh.title('lwh')
-            lwhText=Text(lwh,height=57,width=85)
-            lwhText.insert(END,\
-"kkkc...;k000kkkkOO0O0d,';::ooloooooooodk;...':loxkxxxk0k'..ldl,;:odxO00k;''';l'',olcc\n\
-kx;...:xOOOkxkkkxkOkOkdc;::colllllolloo;....cddxxxxxdxOk,..ldc,,coooxxkkkl,'.''',olcl\n\
-o,..'cddkkxxdxkxddddxkxdl:::,,cloodddc'.....,odxxxdddxkO,..cocccoooodddoxkOo,''.'cllo\n\
-...'coodddxxdxxkkdoooxo;:lc:;,;oddxd:';:dd,''cddxxdlodkO,..:cccooooodoloodkOOc'''';co\n\
-;;:ccoodxxkkxkkxddoclko,;:ddl::cdO000XNWWWWWXKK0OkxlloxO;..',;;;;,,;:c:cccldko''''',;\n\
-lloocdkOOOOOOOOkxxddxkoc::dxxod0NNWWWWWWWWWWWWWWWWWNKOkO:..',;c:;;;:::cllooxOo'';l,''\n\
-oodkOOO00O0OO00000kkkxxxdk00XNNWWMWWWWWWWWWWWWWWWWWWWWWNOo;,,lddooddxxdxxxxkOo'';kOl,\n\
-OO00OO0OOO00OO00KK0000KKNNNWWWWWWMWWWWMWWWWWWWWWWWWWWWWWWWNOodddccoddddddddkOo'';ok0O\n\
-00KK00000OOOOOO000KXNNWWWWWWMMWWWWWWWWWWMWWWWWWMWWWWWWWWWWWWNXOxlcoddddxddxkOl'';odkd\n\
-KKKKK0KKK00OO000KNWWWWWMWWMWMMWWWMWWWMWWMWWWWWWWWWWWWWWWWWWWNNNXkkkddddxddxkOl';cxxl,\n\
-KKKKKK00000OO00XNWWWWMMWWWWWMWWWWWWWWWWWWWWWWWWWWWWWWWWWNNWWNNNNNX0kxkkddxxxOdxkO0Okx\n\
-KKKKKKK00000KKKNWMWWWWWWWWWWWWWWWWWWWWWNNWWWWWNNWWWNNNNNNNNNNNNNNNNXOOxodxxO00KKKOxOK\n\
-0KKKKKK000KXXXNWWMWWWWWWWWWWWWWWNWWWWNXNXXNNNNNXNWNNNXXXXXNNNNNNNNXX0kkxxk0KXXKKK0kkX\n\
-KKK0KKKK000KXWWWWWWWWWWWWWWWNNNNNNWNNKKX0KXXKXXKXNXXXXKKKKXXXNNXNNXXXK0OO0KKXXXKKK00K\n\
-KKXXXXXXK00KNWWWWWWWWWWWWWWNXNNNXXNXX0O0OO00OOKK0KK0KKOO000KKXXNNXNXXXXXKKXXXXXKKKXXK\n\
-0KXXKXKKK00XWWWWWWWWWWWWNNNXKXXX00XK0OOOkxkxodxOxOOO0OdxkOO0O0KXNNNNXXX0KKXXXXXKKXKXK\n\
-KKKKKKXKK0KXWWWWWWWWWWWNXXX00K00Ok0kkkkxxodlclldodxkkdoldxxkkkOKNWNNXNNXXKKKXXNXXXXKK\n\
-o0KKKKKKKKKXNWWWWNWWWWWXKKKO00Okddxdooollcc:::cllllolccccclooox0NWWNNNNXKKKXXXXNXXXXK\n\
-;xOOKXKKKO0XNWWWWWWMMWWX00Okkkxdolll::::;;,,,;;::;;;;;;;;:ccllokXNWWNWNK0XX0XK00XKKXX\n\
-ocdolcdx0xl0NMMMWMMMMWN0kkkkkxxxdollcc:;;;,',,',;;,;;::::clllcloKNNNNWNKkXXKX00000xOK\n\
-;,ddlcodO:cKWMMMWMMMWN0OkkkOkkkkOOOOkxdolcc:;;;:ccloxxxxxdooooll0NNNNNNXXXXXKkd0KKOdd\n\
-..;ll:::dcxXWWWWWWWWWKOkkkkkkxxdolcccloodolc:::cllooollccllllllckWNNNNNXXXK0Okk00K000\n\
-,'.';'c;coxKK0KKKNWWN0Okxxxxxxxxxkkkkdoooddl:;:coodxOOOkddlcccloxNNKKNXXNNK00KXK00KXK\n\
-:::;;l0kxxkK0O0OO0NWX0OOOOOdxxkkkxxxddolokkOdolxoloxxkkxoddlcclxkXXOOXXXXNKKXNNNWNNXX\n\
-oooodk00KKXNNOOkk0NNXOkxxxxdddooooolllclxkkdc;;oxocloolllccccc:llKXxONNNNNXXNWWWWWNNN\n\
-0000KKOO0KXNN0kkOKNNXOkkxddoollccccc::cloddlc;,:lc::::::;;::::::cO0kXNNNNXNNWWWWNNWWW\n\
-000000O0O0000OkkOO0NX0kkxdooolcccccccloddddl:;,;;:c:::::;;;;,,;;cdodKXXXKKXK00KKKKXXN\n\
-kkOOOOOkOOOOOkxxxkO0XKOkxdolcc:;;;;:cloxxdol:;,;;:::;;;;,,'',,;;:::dkkOOxl;;xOOOO0O00\n\
-::cccc:;:ccccc:oxxxO00Okxxdlcc::;::cloxddool:;',;;:::::;;,,,,;;:;;:oddddoc''loododddd\n\
-cccccc::ccc:;;,llddxkOkkxxdolccccclooxOxxxxdl:;;:c::::llc:;;;;::;:looooodkxoodddddddx\n\
-dddddooooooool;oooddxkkkxxxdolllllloodxk0KK0kdlloolc::ccll:::::coooooddddkdoodddddodx\n\
-xddddooooooooolllllooxOkkxxdolloooddxxdxxxxxdoolcclcccllclc::::cllllllllllclooooodddx\n\
-llllllllllllllllllllldKOkxxxdlloddxkkxxxxxdollccclllcllllc::::cclllllllllc:;cllllllll\n\
-lllllllllllllllllllllloxkkkxdolloddxKX0xdool:c::clxKOollc:::::cccccccccccccccccccclll\n\
-ooooooooooooooooooooooookkkkkddloddddxkdxdoc;;;;llooccccc:::ccccllllllllllcccllllllll\n\
-ooooooooooooooooooooooooxkkkkkxdodddxxkxdoolcccclllc:ccc:cccclllllllccccccccccccccccc\n\
-llllllllllllllllllllllllokkkkkkxddxxxxxxxxddoooolcc::c:::ccccccccccccccccccc::::ccccc\n\
-ccccccccccccccccccccclllldkkkkkkxddxddddddddddolcc:::::::cccclcccccccccccccccccccllll\n\
-cccccccccllclccclllllllllokkkkkkkkxddoooollcccc::::;;::ccccccllllllllllllllllllllllll\n\
-lllllllllllllllllllllllllokkkkkkkkkkddollc:::::::::::cccc:::cllllllllllllllllllllllll\n\
-llllllllllllllllllllllllllxkkkkkkkkkkkkxoolccclllllllcc:::::cllllllllllllllllllllllll\n\
-lllllllllllllllllllllllllldkkkkkkOOOkkkkkxddddddoollcc:::::::ccllllllllllllllllllllll\n\
-cccllllllllllllllllllllllldxxkkkkkkkkkkOkkxxdollccc:::;;;;;:::::cccccllllllllllllllll\n\
-llllllllllcllcllllllllcccdxxxxxxxxxxxxxddolcc::::::::;;;;;;;;;;;;;::,.,;:lllllllloooo\n\
-lllllllllllllllllllcc:;;cxxxxxxxddddddddoolc::::::;;;;;;;;;;;;;;;,,;.    .,cllloooooo\n\
-llllllllllllllllc:;;,,,,;oddddddddoooddooolc::::;;;;;;;;;;;;;;;;,,,'        ..,:lllll\n\
-lllllllccccc:;;,,,,,,,,,,;ldddddddoooooolllcc:::;;;;;;;;;;;;;;,,,,;.            ..,;c\n\
-cccccc:;,'''.............'',cooodddolllllcccc:::;;;;;;;;;,,,,,,,;,.                  \n\
-,,''.........................',:lddolc:cccc:::::;;;;;;,,,,,,,,;'.                    \n\
-.................................,col:;;;;::::::;;,,,,,,,,,'..                       \n\
-........................................'',,;;;;;,,,,''...                           \n\
-.............................              ......                                    \n\
-..........................                                                           \n\
-      ....................                                                           \n\
-       ..................                                                            \n\
-          ... .   ..  ...                                                            \n")
-            lwhText.pack()
-            lwh.mainloop()
-        else:
-            message=sshcommand("rsh " + nodeVar.get() + " '"+command+"'")
-            setText(message+'\n')
+        
+        message=sshcommand("rsh " + nodeVar.get() + " '"+command+"'")
+        setText(message+'\n')
     t=threading.Thread(target=putcommand)
     t.start()
 
@@ -553,13 +640,10 @@ def classify():
         d=2
 
         # FFT the concentration to a 64*64*64 matrix
-        sf = abs(np.fft.fftn(pha[0],[nx*d,ny*d,nz*d]))[0:int(4*d),0:int(4*d),0:int(4*d)]
+        sf = abs(np.fft.fftn(pha[0],[64*d,64*d,64*d]))[0:int(4*d),0:int(4*d),0:int(4*d)]
         
         sf /= sf[0][0][0]
         return sf
-
-    from sklearn.externals import joblib
-    import numpy as np
 
     result=[]
     for i in range(len(labels)):
@@ -573,19 +657,19 @@ def classify():
     with open('classifier.pkl','rb') as file:
         classifier=joblib.load(file)
 
-    with open('estimator.pkl','rb') as file:
-        estimator=joblib.load(file)
+    # with open('estimator.pkl','rb') as file:
+        # estimator=joblib.load(file)
 
     # Load a file and convert to fft matrix
     matrix = np.array(geteig('./pha.dat',nx,ny,nz)).reshape((1,-1))
 
     # Print the result
     # print(estimator.predict(matrix))
-    if estimator.predict(matrix)[0] > 0:
-        setText(classifier.predict(matrix)[0]+'\n')
-        setText(str(round(max(classifier.predict_proba(matrix)[0]),3)*100)+'%\n')
-    else:
-        setText('not a known phase\n')
+    # if estimator.predict(matrix)[0] > 0:
+    setText(classifier.predict(matrix)[0]+'\n')
+    setText(str(round(max(classifier.predict_proba(matrix)[0]),3)*100)+'%\n')
+    # else:
+        # setText('not a known phase\n')
     
 def vmstat():
     message=sshcommand("rsh " + nodeVar.get() + " 'vmstat'")
@@ -637,13 +721,13 @@ if __name__ == '__main__':
 
     nodeframe = Frame(root)
     nodeVar=StringVar(root)
-    nodeVar.set('c0102')
+    nodeVar.set('c0103')
     nodes=['c0102','c0103','c0105','c0106','c0108','c0109','c0110','c0111','c0112','c0113']
     for i, item in enumerate(nodes):
         Radiobutton(nodeframe, text=item, variable=nodeVar, value=item,command=vmstat).grid(row=0,column=i,padx=5)
 
     resultText = Text(root,height=20,width=85)
-    cmdEntry = Entry(root,width=85)
+    cmdEntry = Entry(root,width=96)
     cmdEntry.bind('<Key-Return>', entryCommand)
     setText("WELCOME TO ABCDEN\n")
     
