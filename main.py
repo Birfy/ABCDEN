@@ -763,14 +763,14 @@ def connectcdy():
     # private_key = paramiko.RSAKey.from_private_key_file('C:/Users/Birfy/.ssh/id_rsa')
     transport = paramiko.Transport(('10.158.131.62', 22))
     # transport.connect(username='NXW', pkey=private_key)
-    transport.connect(username='cdy', password='birfy19970405')
+    transport.connect(username='cdy')
     sftp = paramiko.SFTPClient.from_transport(transport)
     setText('SFTP IS LOADED\n')
 
     #Load ssh
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(hostname='10.158.131.62',port=22,username='cdy',password='birfy19970405')
+    ssh.connect(hostname='10.158.131.62',port=22,username='cdy')
     # ssh.connect(hostname='10.158.131.62',port=22,username='NXW')
     setText('SSH IS LOADED\n')
 
@@ -786,14 +786,13 @@ def connectnxw():
     private_key = paramiko.RSAKey.from_private_key_file('C:/Users/Birfy/.ssh/id_rsa')
     transport = paramiko.Transport(('10.158.131.62', 22))
     transport.connect(username='NXW', pkey=private_key)
-    # transport.connect(username='cdy', password='birfy19970405')
     sftp = paramiko.SFTPClient.from_transport(transport)
     setText('SFTP IS LOADED\n')
 
     #Load ssh
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    # ssh.connect(hostname='10.158.131.62',port=22,username='cdy',password='birfy19970405')
+    # ssh.connect(hostname='10.158.131.62',port=22,username='cdy')
     ssh.connect(hostname='10.158.131.62',port=22,username='NXW')
     setText('SSH IS LOADED\n')
 
